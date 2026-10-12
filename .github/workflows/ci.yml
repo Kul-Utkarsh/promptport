@@ -1,0 +1,55 @@
+﻿name: CI - PromptPort
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-and-test:
+    name: Verify Code & Manifest Integrity
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Verify JavaScript Syntax (node -c)
+        run: |
+          node -c background.js
+          node -c content.js
+          node -c side_panel.js
+
+      - name: Validate Manifest V3 Schema & Asset Integrity
+        run: |
+          node -e '
+            const fs = require("fs");
+            const manifest = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            if (manifest.manifest_version !== 3) {
+              console.error("Error: manifest_version must be 3");
+              process.exit(1);
+            }
+            if (!manifest.side_panel || !manifest.side_panel.default_path) {
+              console.error("Error: side_panel.default_path is missing");
+              process.exit(1);
+            }
+            if (manifest.icons) {
+              for (const [size, iconPath] of Object.entries(manifest.icons)) {
+                if (!fs.existsSync(iconPath)) {
+                  console.error(`Error: Icon missing at ${iconPath}`);
+                  process.exit(1);
+                }
+              }
+            }
+            console.log("✔ Manifest V3 and icon assets verified successfully.");
+          '

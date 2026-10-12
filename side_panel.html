@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptPort</title>
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/aileron">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&display=swap">
+  <link rel="stylesheet" href="side_panel.css">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- ========================================== -->
+    <!-- 1. MAIN VIEW: SESSIONS LIST & EMPTY STATE   -->
+    <!-- ========================================== -->
+    <div id="mainView" class="view-screen">
+      <!-- Figma HeaderSection (Row 1: Brand & Window Actions; Row 2: Active Session Status Pill & Capture CTA) -->
+      <header class="fig-header">
+        <div class="fig-header-top">
+          <div class="fig-brand">
+            <div class="fig-brand-icon">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M9.21866 6.78133C8.17733 5.74032 6.48933 5.74032 5.448 6.78133L2.78133 9.448C2.08811 10.1175 1.8101 11.109 2.05414 12.0414C2.29818 12.9737 3.0263 13.7018 3.95864 13.9459C4.89099 14.1899 5.88247 13.9119 6.552 13.2187L7.28666 12.4847M6.78133 9.21867C7.82266 10.2597 9.51067 10.2597 10.552 9.21867L13.2187 6.552C14.2293 5.50566 14.2148 3.84244 13.1862 2.81382C12.1576 1.78519 10.4943 1.77074 9.448 2.78133L8.71466 3.51467" stroke="#DCEB7D" stroke-width="1.46667" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+            </div>
+            <div class="fig-brand-text">
+              <h1 class="fig-brand-title">PromptPort</h1>
+              <span class="fig-brand-subtitle">Context Transfer & Archive</span>
+            </div>
+          </div>
+          <div class="fig-quick-actions">
+            <button id="btnSettings" class="fig-icon-btn" title="Settings & Preferences">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="2.25" cy="2.25" r="2.25" transform="matrix(-1 0 0 1 11.25 6.75)" stroke="#373634" stroke-width="1.5"/>
+<path d="M8.99963 1.5V0.75H8.99959L8.99963 1.5ZM12.3746 3.70312L11.9995 4.35258L11.9996 4.35264L12.3746 3.70312ZM12.3746 14.2969L11.9996 13.6474L11.9995 13.6474L12.3746 14.2969ZM8.99963 16.5L8.99959 17.25H8.99963V16.5ZM5.62463 14.2969L5.99963 13.6474L5.99957 13.6473L5.62463 14.2969ZM5.62463 3.70312L5.99953 4.35271L5.99963 4.35264L5.62463 3.70312ZM6.65373 2.39771L7.37272 2.61114L6.65373 2.39771ZM2.3028 7.37327L2.82038 6.83049L2.3028 7.37327ZM4.12405 14.0279L4.25036 14.7672L4.12405 14.0279ZM3.2157 13.7707L2.63735 14.2482L3.2157 13.7707ZM7.2874 16.3027L7.45836 15.5725L7.2874 16.3027ZM6.6536 15.6016L7.37253 15.3879L6.6536 15.6016ZM11.3457 15.6015L10.6268 15.3877L11.3457 15.6015ZM14.7835 13.7709L15.3617 14.2486L14.7835 13.7709ZM13.8754 14.0281L14.0017 13.2888L13.8754 14.0281ZM16.0261 6.37705L15.3235 6.63939L16.0261 6.37705ZM15.6973 7.37317L16.2147 7.91616L15.6973 7.37317ZM2.30266 10.6259L2.82009 11.1688L2.30266 10.6259ZM13.8755 3.97113L13.7487 3.23192L13.8755 3.97113ZM14.7835 4.22807L14.2053 4.70573L14.7835 4.22807ZM4.12402 3.9713L3.99728 4.71051L4.12402 3.9713ZM15.6975 10.626L15.1803 11.1691L15.6975 10.626ZM16.0262 11.6218L15.3236 11.3595L16.0262 11.6218ZM11.3456 2.39777L12.0646 2.18422L11.3456 2.39777ZM8.99963 1.5V2.25C9.53058 2.25 10.0466 2.3113 10.541 2.42676L10.7115 1.69641L10.8821 0.966055C10.2768 0.82471 9.6464 0.75 8.99963 0.75V1.5ZM11.3456 2.39777L10.6266 2.61131C10.8368 3.3189 11.3081 3.95325 11.9995 4.35258L12.3746 3.70312L12.7498 3.05367C12.4048 2.85442 12.1702 2.53984 12.0646 2.18422L11.3456 2.39777ZM12.3746 3.70312L11.9996 4.35264C12.6298 4.71649 13.3382 4.82422 14.0022 4.71034L13.8755 3.97113L13.7487 3.23192C13.4155 3.28906 13.0642 3.2352 12.7496 3.05361L12.3746 3.70312ZM14.7835 4.22807L14.2053 4.70573C14.6789 5.27903 15.059 5.93113 15.3235 6.63939L16.0261 6.37705L16.7287 6.1147C16.405 5.2476 15.94 4.45037 15.3617 3.75041L14.7835 4.22807ZM15.6973 7.37317L15.18 6.83019C14.6083 7.37488 14.2496 8.14563 14.2496 9H14.9996H15.7496C15.7496 8.57372 15.9271 8.19019 16.2147 7.91616L15.6973 7.37317ZM14.9996 9H14.2496C14.2496 9.85454 14.6086 10.6248 15.1803 11.1691L15.6975 10.626L16.2147 10.0829C15.927 9.80895 15.7496 9.42592 15.7496 9H14.9996ZM16.0262 11.6218L15.3236 11.3595C15.0592 12.0678 14.679 12.7198 14.2052 13.2933L14.7835 13.7709L15.3617 14.2486C15.94 13.5486 16.4051 12.7514 16.7289 11.8841L16.0262 11.6218ZM13.8754 14.0281L14.0017 13.2888C13.3375 13.1753 12.6294 13.2838 11.9996 13.6474L12.3746 14.2969L12.7496 14.9464C13.0645 14.7646 13.4161 14.7105 13.7491 14.7674L13.8754 14.0281ZM12.3746 14.2969L11.9995 13.6474C11.3085 14.0466 10.8372 14.6804 10.6268 15.3877L11.3457 15.6015L12.0646 15.8153C12.1703 15.4599 12.4048 15.1456 12.7498 14.9463L12.3746 14.2969ZM10.7118 16.3027L10.5408 15.5725C10.0461 15.6883 9.53029 15.75 8.99963 15.75V16.5V17.25C9.64704 17.25 10.2776 17.1746 10.8827 17.033L10.7118 16.3027ZM8.99963 16.5L8.99967 15.75C8.4688 15.75 7.953 15.6883 7.45836 15.5725L7.2874 16.3027L7.11644 17.033C7.72168 17.1747 8.35215 17.25 8.99959 17.25L8.99963 16.5ZM6.6536 15.6016L7.37253 15.3879C7.16229 14.6805 6.69101 14.0465 5.99963 13.6474L5.62463 14.2969L5.24963 14.9464C5.59466 15.1456 5.82907 15.4599 5.93467 15.8152L6.6536 15.6016ZM5.62463 14.2969L5.99957 13.6473C5.36999 13.2839 4.66207 13.1751 3.99775 13.2887L4.12405 14.0279L4.25036 14.7672C4.58302 14.7104 4.93453 14.7645 5.2497 14.9464L5.62463 14.2969ZM3.2157 13.7707L3.79405 13.2932C3.32073 12.7199 2.94088 12.0678 2.67662 11.3596L1.97394 11.6218L1.27126 11.884C1.59475 12.7509 2.05937 13.5482 2.63735 14.2482L3.2157 13.7707ZM2.30266 10.6259L2.82009 11.1688C3.39149 10.6243 3.74963 9.85403 3.74963 9H2.99963H2.24963C2.24963 9.42628 2.07244 9.80928 1.78524 10.083L2.30266 10.6259ZM2.99963 9H3.74963C3.74963 8.14614 3.39183 7.37541 2.82038 6.83049L2.3028 7.37327L1.78522 7.91605C2.07237 8.18987 2.24963 8.57336 2.24963 9H2.99963ZM1.97406 6.37706L2.67672 6.6393C2.94104 5.93106 3.32081 5.27897 3.79401 4.70585L3.21567 4.22834L2.63732 3.75083C2.05937 4.45082 1.59488 5.24805 1.2714 6.11483L1.97406 6.37706ZM4.12402 3.9713L3.99728 4.71051C4.66143 4.82438 5.36953 4.71629 5.99953 4.35271L5.62463 3.70312L5.24974 3.05354C4.93488 3.23526 4.58358 3.28915 4.25076 3.23208L4.12402 3.9713ZM5.62463 3.70312L5.99963 4.35264C6.69133 3.95329 7.16263 3.31886 7.37272 2.61114L6.65373 2.39771L5.93474 2.18427C5.82917 2.53991 5.59467 2.8544 5.24963 3.05361L5.62463 3.70312ZM7.28765 1.69639L7.45823 2.42673C7.9526 2.31127 8.46851 2.25003 8.99967 2.25L8.99963 1.5L8.99959 0.75C8.35278 0.750034 7.72245 0.824658 7.11708 0.966043L7.28765 1.69639ZM6.65373 2.39771L7.37272 2.61114C7.39798 2.52604 7.43186 2.46783 7.45746 2.4374C7.47947 2.41123 7.48047 2.42154 7.45823 2.42673L7.28765 1.69639L7.11708 0.966043C6.40937 1.13133 6.06566 1.74327 5.93474 2.18427L6.65373 2.39771ZM2.3028 7.37327L2.82038 6.83049C2.74707 6.76058 2.70482 6.69211 2.6879 6.64698C2.67357 6.60876 2.68581 6.61496 2.67672 6.6393L1.97406 6.37706L1.2714 6.11483C0.98388 6.88525 1.41961 7.56741 1.78522 7.91605L2.3028 7.37327ZM4.12405 14.0279L3.99775 13.2887C3.91029 13.3036 3.84315 13.299 3.80446 13.2895C3.77115 13.2813 3.77969 13.2758 3.79405 13.2932L3.2157 13.7707L2.63735 14.2482C3.09887 14.8072 3.79768 14.8446 4.25036 14.7672L4.12405 14.0279ZM7.2874 16.3027L7.45836 15.5725C7.48048 15.5777 7.47939 15.5879 7.45733 15.5617C7.43169 15.5312 7.39781 15.473 7.37253 15.3879L6.6536 15.6016L5.93467 15.8152C6.06569 16.2561 6.40932 16.8675 7.11644 17.033L7.2874 16.3027ZM11.3457 15.6015L10.6268 15.3877C10.6015 15.4728 10.5676 15.5311 10.542 15.5616C10.5199 15.5879 10.5188 15.5776 10.5408 15.5725L10.7118 16.3027L10.8827 17.033C11.5899 16.8675 11.9335 16.2561 12.0646 15.8153L11.3457 15.6015ZM14.7835 13.7709L14.2052 13.2933C14.2196 13.2759 14.2281 13.2815 14.1948 13.2897C14.1561 13.2991 14.0891 13.3037 14.0017 13.2888L13.8754 14.0281L13.7491 14.7674C14.2019 14.8448 14.9003 14.8072 15.3617 14.2486L14.7835 13.7709ZM16.0261 6.37705L15.3235 6.63939C15.3144 6.61503 15.3266 6.60878 15.3123 6.64693C15.2954 6.69198 15.2532 6.76038 15.18 6.83019L15.6973 7.37317L16.2147 7.91616C16.5806 7.5675 17.0164 6.8852 16.7287 6.1147L16.0261 6.37705ZM1.97394 11.6218L2.67662 11.3596C2.6857 11.3839 2.67348 11.3902 2.68777 11.352C2.70466 11.307 2.74685 11.2386 2.82009 11.1688L2.30266 10.6259L1.78524 10.083C1.41943 10.4316 0.983839 11.1137 1.27126 11.884L1.97394 11.6218ZM13.8755 3.97113L14.0022 4.71034C14.0894 4.69539 14.1564 4.69997 14.1949 4.70942C14.2281 4.71755 14.2196 4.72308 14.2053 4.70573L14.7835 4.22807L15.3617 3.75041C14.9002 3.1918 14.2017 3.15423 13.7487 3.23192L13.8755 3.97113ZM3.21567 4.22834L3.79401 4.70585C3.77965 4.72325 3.77108 4.71773 3.80431 4.70958C3.84291 4.70012 3.90996 4.69554 3.99728 4.71051L4.12402 3.9713L4.25076 3.23208C3.79782 3.15443 3.09889 3.19178 2.63732 3.75083L3.21567 4.22834ZM15.6975 10.626L15.1803 11.1691C15.2534 11.2388 15.2956 11.3071 15.3125 11.3521C15.3267 11.3901 15.3145 11.3839 15.3236 11.3595L16.0262 11.6218L16.7289 11.8841C17.0165 11.1137 16.5808 10.4315 16.2147 10.0829L15.6975 10.626ZM10.7115 1.69641L10.541 2.42676C10.5188 2.42157 10.5198 2.41127 10.5418 2.43747C10.5675 2.46793 10.6014 2.52617 10.6266 2.61131L11.3456 2.39777L12.0646 2.18422C11.9336 1.74326 11.5898 1.13132 10.8821 0.966055L10.7115 1.69641Z" fill="#373634"/>
+</svg>
+            </button>
+            <button id="btnRefreshHeader" class="fig-icon-btn" title="Refresh Tool">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3579)">
+<path d="M2 7.99984C2 4.68613 4.68629 1.99984 8 1.99984C9.88484 1.99984 11.5667 2.86895 12.6667 4.22828M13 1.99984V4.6665H10.3333" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 7.99984C14 11.3135 11.3137 13.9998 8 13.9998C6.11516 13.9998 4.4333 13.1307 3.33333 11.7714M3 13.9998L3 11.3332L5.66667 11.3332" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3579">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            </button>
+            <button id="btnClosePanel" class="fig-icon-btn" title="Close Panel">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3585)">
+<path d="M5.25 5.25L12.75 12.75M5.25 12.75L12.75 5.25" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3585">
+<rect width="18" height="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="fig-header-bottom">
+          <div class="fig-status-pill">
+            <span class="fig-status-label">Platform:</span>
+            <span id="live-header-name" class="fig-status-value">Detecting...</span>
+          </div>
+          <button id="btnRefresh" class="fig-capture-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3596)">
+<path d="M6 3.3333L8 1.3333L10 3.33331M8 1.3333L8 9.33331" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M3.99996 5.99997H2.66663V11.3333C2.66663 12.4379 3.56206 13.3333 4.66663 13.3333H11.3333C12.4379 13.3333 13.3333 12.4379 13.3333 11.3333V5.99997H12" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3596">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            <span>Capture</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Section: Search & Filter Pills -->
+      <section class="fig-search-section">
+        <div class="fig-search-input-wrap">
+          <svg class="fig-search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3605)">
+<path d="M14 14L11.1046 11.1046M11.1046 11.1046C12.0697 10.1394 12.6667 8.80609 12.6667 7.33333C12.6667 4.38781 10.2789 2 7.33333 2C4.38781 2 2 4.38781 2 7.33333C2 10.2789 4.38781 12.6667 7.33333 12.6667C8.80609 12.6667 10.1394 12.0697 11.1046 11.1046Z" stroke="#AFAFAE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3605">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+          <input type="text" id="searchInput" class="fig-search-input" placeholder="Search chats, models, or topics..." />
+        </div>
+
+        <div class="fig-filter-strip" id="filterPillsStrip">
+          <button class="fig-filter-pill active" data-filter="all">All (0)</button>
+          <button class="fig-filter-pill" data-filter="Gemini">Gemini</button>
+          <button class="fig-filter-pill" data-filter="ChatGPT">ChatGPT</button>
+          <button class="fig-filter-pill" data-filter="Claude">Claude</button>
+          <button class="fig-filter-pill" data-filter="Z-AI">Z-AI</button>
+          <button class="fig-filter-pill" data-filter="DeepSeek">DeepSeek</button>
+        </div>
+      </section>
+
+      <!-- Chat Sessions List / Empty State -->
+      <main class="fig-sessions-list" id="sessionsList">
+        <!-- Rendered dynamically by side_panel.js -->
+        <div class="fig-empty-state" id="emptyState">
+          <div class="fig-empty-title">No chat capture yet</div>
+          <div class="fig-empty-desc">Please click on capture button to capture chat</div>
+        </div>
+      </main>
+    </div>
+
+
+    <!-- ==================================================== -->
+    <!-- 2. DETAIL / PREVIEW VIEW: CHAT TRANSFER & EXPORT    -->
+    <!-- ==================================================== -->
+    <div id="detailView" class="view-screen hidden">
+      <!-- TopHeader with Back, Export Chat dropdown, Settings, Sync, Dismiss -->
+      <header class="fig-detail-topheader">
+        <button id="btnBackToMain" class="fig-icon-btn" title="Back to conversations">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3800)">
+<path d="M3.75 9H14.25" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9 3.75L3.75 9L9 14.25" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3800">
+<rect width="18" height="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+        </button>
+
+        <div class="fig-detail-quick-actions">
+          <!-- Export Chat Menu Trigger & Dropdown -->
+          <div class="fig-export-dropdown-wrapper">
+            <button id="btnExportChatMenu" class="fig-export-chat-btn">
+              <span>Export Chat</span>
+            </button>
+            <div id="exportChatDropdown" class="fig-export-menu hidden">
+              <button class="fig-export-menu-item" id="btnExportPdf">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#373634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                <span>PDF</span>
+              </button>
+              <button class="fig-export-menu-item" id="btnExportDoc">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#373634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>DOCX</span>
+              </button>
+              <button class="fig-export-menu-item" id="btnExportJson">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#373634" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/>
+                </svg>
+                <span>JSON</span>
+              </button>
+            </div>
+          </div>
+
+          <button id="btnDetailSettings" class="fig-icon-btn" title="Settings">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="2.25" cy="2.25" r="2.25" transform="matrix(-1 0 0 1 11.25 6.75)" stroke="#373634" stroke-width="1.5"/>
+<path d="M8.99963 1.5V0.75H8.99959L8.99963 1.5ZM12.3746 3.70312L11.9995 4.35258L11.9996 4.35264L12.3746 3.70312ZM12.3746 14.2969L11.9996 13.6474L11.9995 13.6474L12.3746 14.2969ZM8.99963 16.5L8.99959 17.25H8.99963V16.5ZM5.62463 14.2969L5.99963 13.6474L5.99957 13.6473L5.62463 14.2969ZM5.62463 3.70312L5.99953 4.35271L5.99963 4.35264L5.62463 3.70312ZM6.65373 2.39771L7.37272 2.61114L6.65373 2.39771ZM2.3028 7.37327L2.82038 6.83049L2.3028 7.37327ZM4.12405 14.0279L4.25036 14.7672L4.12405 14.0279ZM3.2157 13.7707L2.63735 14.2482L3.2157 13.7707ZM7.2874 16.3027L7.45836 15.5725L7.2874 16.3027ZM6.6536 15.6016L7.37253 15.3879L6.6536 15.6016ZM11.3457 15.6015L10.6268 15.3877L11.3457 15.6015ZM14.7835 13.7709L15.3617 14.2486L14.7835 13.7709ZM13.8754 14.0281L14.0017 13.2888L13.8754 14.0281ZM16.0261 6.37705L15.3235 6.63939L16.0261 6.37705ZM15.6973 7.37317L16.2147 7.91616L15.6973 7.37317ZM2.30266 10.6259L2.82009 11.1688L2.30266 10.6259ZM13.8755 3.97113L13.7487 3.23192L13.8755 3.97113ZM14.7835 4.22807L14.2053 4.70573L14.7835 4.22807ZM4.12402 3.9713L3.99728 4.71051L4.12402 3.9713ZM15.6975 10.626L15.1803 11.1691L15.6975 10.626ZM16.0262 11.6218L15.3236 11.3595L16.0262 11.6218ZM11.3456 2.39777L12.0646 2.18422L11.3456 2.39777ZM8.99963 1.5V2.25C9.53058 2.25 10.0466 2.3113 10.541 2.42676L10.7115 1.69641L10.8821 0.966055C10.2768 0.82471 9.6464 0.75 8.99963 0.75V1.5ZM11.3456 2.39777L10.6266 2.61131C10.8368 3.3189 11.3081 3.95325 11.9995 4.35258L12.3746 3.70312L12.7498 3.05367C12.4048 2.85442 12.1702 2.53984 12.0646 2.18422L11.3456 2.39777ZM12.3746 3.70312L11.9996 4.35264C12.6298 4.71649 13.3382 4.82422 14.0022 4.71034L13.8755 3.97113L13.7487 3.23192C13.4155 3.28906 13.0642 3.2352 12.7496 3.05361L12.3746 3.70312ZM14.7835 4.22807L14.2053 4.70573C14.6789 5.27903 15.059 5.93113 15.3235 6.63939L16.0261 6.37705L16.7287 6.1147C16.405 5.2476 15.94 4.45037 15.3617 3.75041L14.7835 4.22807ZM15.6973 7.37317L15.18 6.83019C14.6083 7.37488 14.2496 8.14563 14.2496 9H14.9996H15.7496C15.7496 8.57372 15.9271 8.19019 16.2147 7.91616L15.6973 7.37317ZM14.9996 9H14.2496C14.2496 9.85454 14.6086 10.6248 15.1803 11.1691L15.6975 10.626L16.2147 10.0829C15.927 9.80895 15.7496 9.42592 15.7496 9H14.9996ZM16.0262 11.6218L15.3236 11.3595C15.0592 12.0678 14.679 12.7198 14.2052 13.2933L14.7835 13.7709L15.3617 14.2486C15.94 13.5486 16.4051 12.7514 16.7289 11.8841L16.0262 11.6218ZM13.8754 14.0281L14.0017 13.2888C13.3375 13.1753 12.6294 13.2838 11.9996 13.6474L12.3746 14.2969L12.7496 14.9464C13.0645 14.7646 13.4161 14.7105 13.7491 14.7674L13.8754 14.0281ZM12.3746 14.2969L11.9995 13.6474C11.3085 14.0466 10.8372 14.6804 10.6268 15.3877L11.3457 15.6015L12.0646 15.8153C12.1703 15.4599 12.4048 15.1456 12.7498 14.9463L12.3746 14.2969ZM10.7118 16.3027L10.5408 15.5725C10.0461 15.6883 9.53029 15.75 8.99963 15.75V16.5V17.25C9.64704 17.25 10.2776 17.1746 10.8827 17.033L10.7118 16.3027ZM8.99963 16.5L8.99967 15.75C8.4688 15.75 7.953 15.6883 7.45836 15.5725L7.2874 16.3027L7.11644 17.033C7.72168 17.1747 8.35215 17.25 8.99959 17.25L8.99963 16.5ZM6.6536 15.6016L7.37253 15.3879C7.16229 14.6805 6.69101 14.0465 5.99963 13.6474L5.62463 14.2969L5.24963 14.9464C5.59466 15.1456 5.82907 15.4599 5.93467 15.8152L6.6536 15.6016ZM5.62463 14.2969L5.99957 13.6473C5.36999 13.2839 4.66207 13.1751 3.99775 13.2887L4.12405 14.0279L4.25036 14.7672C4.58302 14.7104 4.93453 14.7645 5.2497 14.9464L5.62463 14.2969ZM3.2157 13.7707L3.79405 13.2932C3.32073 12.7199 2.94088 12.0678 2.67662 11.3596L1.97394 11.6218L1.27126 11.884C1.59475 12.7509 2.05937 13.5482 2.63735 14.2482L3.2157 13.7707ZM2.30266 10.6259L2.82009 11.1688C3.39149 10.6243 3.74963 9.85403 3.74963 9H2.99963H2.24963C2.24963 9.42628 2.07244 9.80928 1.78524 10.083L2.30266 10.6259ZM2.99963 9H3.74963C3.74963 8.14614 3.39183 7.37541 2.82038 6.83049L2.3028 7.37327L1.78522 7.91605C2.07237 8.18987 2.24963 8.57336 2.24963 9H2.99963ZM1.97406 6.37706L2.67672 6.6393C2.94104 5.93106 3.32081 5.27897 3.79401 4.70585L3.21567 4.22834L2.63732 3.75083C2.05937 4.45082 1.59488 5.24805 1.2714 6.11483L1.97406 6.37706ZM4.12402 3.9713L3.99728 4.71051C4.66143 4.82438 5.36953 4.71629 5.99953 4.35271L5.62463 3.70312L5.24974 3.05354C4.93488 3.23526 4.58358 3.28915 4.25076 3.23208L4.12402 3.9713ZM5.62463 3.70312L5.99963 4.35264C6.69133 3.95329 7.16263 3.31886 7.37272 2.61114L6.65373 2.39771L5.93474 2.18427C5.82917 2.53991 5.59467 2.8544 5.24963 3.05361L5.62463 3.70312ZM7.28765 1.69639L7.45823 2.42673C7.9526 2.31127 8.46851 2.25003 8.99967 2.25L8.99963 1.5L8.99959 0.75C8.35278 0.750034 7.72245 0.824658 7.11708 0.966043L7.28765 1.69639ZM6.65373 2.39771L7.37272 2.61114C7.39798 2.52604 7.43186 2.46783 7.45746 2.4374C7.47947 2.41123 7.48047 2.42154 7.45823 2.42673L7.28765 1.69639L7.11708 0.966043C6.40937 1.13133 6.06566 1.74327 5.93474 2.18427L6.65373 2.39771ZM2.3028 7.37327L2.82038 6.83049C2.74707 6.76058 2.70482 6.69211 2.6879 6.64698C2.67357 6.60876 2.68581 6.61496 2.67672 6.6393L1.97406 6.37706L1.2714 6.11483C0.98388 6.88525 1.41961 7.56741 1.78522 7.91605L2.3028 7.37327ZM4.12405 14.0279L3.99775 13.2887C3.91029 13.3036 3.84315 13.299 3.80446 13.2895C3.77115 13.2813 3.77969 13.2758 3.79405 13.2932L3.2157 13.7707L2.63735 14.2482C3.09887 14.8072 3.79768 14.8446 4.25036 14.7672L4.12405 14.0279ZM7.2874 16.3027L7.45836 15.5725C7.48048 15.5777 7.47939 15.5879 7.45733 15.5617C7.43169 15.5312 7.39781 15.473 7.37253 15.3879L6.6536 15.6016L5.93467 15.8152C6.06569 16.2561 6.40932 16.8675 7.11644 17.033L7.2874 16.3027ZM11.3457 15.6015L10.6268 15.3877C10.6015 15.4728 10.5676 15.5311 10.542 15.5616C10.5199 15.5879 10.5188 15.5776 10.5408 15.5725L10.7118 16.3027L10.8827 17.033C11.5899 16.8675 11.9335 16.2561 12.0646 15.8153L11.3457 15.6015ZM14.7835 13.7709L14.2052 13.2933C14.2196 13.2759 14.2281 13.2815 14.1948 13.2897C14.1561 13.2991 14.0891 13.3037 14.0017 13.2888L13.8754 14.0281L13.7491 14.7674C14.2019 14.8448 14.9003 14.8072 15.3617 14.2486L14.7835 13.7709ZM16.0261 6.37705L15.3235 6.63939C15.3144 6.61503 15.3266 6.60878 15.3123 6.64693C15.2954 6.69198 15.2532 6.76038 15.18 6.83019L15.6973 7.37317L16.2147 7.91616C16.5806 7.5675 17.0164 6.8852 16.7287 6.1147L16.0261 6.37705ZM1.97394 11.6218L2.67662 11.3596C2.6857 11.3839 2.67348 11.3902 2.68777 11.352C2.70466 11.307 2.74685 11.2386 2.82009 11.1688L2.30266 10.6259L1.78524 10.083C1.41943 10.4316 0.983839 11.1137 1.27126 11.884L1.97394 11.6218ZM13.8755 3.97113L14.0022 4.71034C14.0894 4.69539 14.1564 4.69997 14.1949 4.70942C14.2281 4.71755 14.2196 4.72308 14.2053 4.70573L14.7835 4.22807L15.3617 3.75041C14.9002 3.1918 14.2017 3.15423 13.7487 3.23192L13.8755 3.97113ZM3.21567 4.22834L3.79401 4.70585C3.77965 4.72325 3.77108 4.71773 3.80431 4.70958C3.84291 4.70012 3.90996 4.69554 3.99728 4.71051L4.12402 3.9713L4.25076 3.23208C3.79782 3.15443 3.09889 3.19178 2.63732 3.75083L3.21567 4.22834ZM15.6975 10.626L15.1803 11.1691C15.2534 11.2388 15.2956 11.3071 15.3125 11.3521C15.3267 11.3901 15.3145 11.3839 15.3236 11.3595L16.0262 11.6218L16.7289 11.8841C17.0165 11.1137 16.5808 10.4315 16.2147 10.0829L15.6975 10.626ZM10.7115 1.69641L10.541 2.42676C10.5188 2.42157 10.5198 2.41127 10.5418 2.43747C10.5675 2.46793 10.6014 2.52617 10.6266 2.61131L11.3456 2.39777L12.0646 2.18422C11.9336 1.74326 11.5898 1.13132 10.8821 0.966055L10.7115 1.69641Z" fill="#373634"/>
+</svg>
+          </button>
+          <button id="btnDetailSync" class="fig-icon-btn" title="Refresh context">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3579)">
+<path d="M2 7.99984C2 4.68613 4.68629 1.99984 8 1.99984C9.88484 1.99984 11.5667 2.86895 12.6667 4.22828M13 1.99984V4.6665H10.3333" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M14 7.99984C14 11.3135 11.3137 13.9998 8 13.9998C6.11516 13.9998 4.4333 13.1307 3.33333 11.7714M3 13.9998L3 11.3332L5.66667 11.3332" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3579">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+          </button>
+          <button id="btnDetailClose" class="fig-icon-btn" title="Close Panel">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3585)">
+<path d="M5.25 5.25L12.75 12.75M5.25 12.75L12.75 5.25" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3585">
+<rect width="18" height="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Subheader with Conversation Title & AI tag -->
+      <div class="fig-detail-title-row">
+        <h2 id="detailTitle" class="fig-detail-title">Conversation Details</h2>
+        <span id="detailPlatformTag" class="fig-ai-tag">GEMINI</span>
+      </div>
+
+      <!-- Scrollable Body Content -->
+      <div class="fig-detail-body">
+        <!-- Strategy Card -->
+        <div class="fig-strategy-card" id="strategyCard" data-mode="condensed">
+          <div class="fig-strategy-label">EXPORT STRATEGY</div>
+
+          <!-- Strategy Selector Custom Dropdown -->
+          <div class="fig-strategy-selector-row">
+            <div class="fig-custom-dropdown" id="strategyDropdown">
+              <button type="button" class="fig-dropdown-trigger" id="btnStrategyTrigger">
+                <div class="fig-dropdown-current" id="strategySelectedCurrent">
+                  <svg id="strategySelectedIcon" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.5 10.5L9.75 1.5V7.5H13.5L8.25 16.5V10.5H4.5Z" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                  <span id="strategySelectedLabel">Smart Summary</span>
+                </div>
+                <svg class="fig-dropdown-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6L8 10L12 6" stroke="#5F5E5D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+
+              <div class="fig-dropdown-menu hidden" id="strategyDropdownMenu">
+                <div class="fig-dropdown-option selected" data-value="condensed">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.5 10.5L9.75 1.5V7.5H13.5L8.25 16.5V10.5H4.5Z" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Smart Summary</span>
+                </div>
+                <div class="fig-dropdown-option" data-value="plain">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 6H15C15.4142 6 15.75 6.33579 15.75 6.75V15L13.2502 12.9232C13.1156 12.8114 12.9456 12.75 12.7705 12.75H6.75C6.33579 12.75 6 12.4142 6 12V9.75M12 6V3.75C12 3.33579 11.6642 3 11.25 3H3C2.58579 3 2.25 3.33579 2.25 3.75V12.0002L4.74976 9.92311C4.88441 9.81124 5.05443 9.75 5.22949 9.75H6M12 6V9C12 9.41421 11.6642 9.75 11.25 9.75H6" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Full Conversation</span>
+                </div>
+                <div class="fig-dropdown-option" data-value="json">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.5 8.25L12 9.75L10.5 11.25M7.5 11.25L6 9.75L7.5 8.25M2.25 4.5V12.6C2.25 13.4401 2.25 13.8598 2.41349 14.1807C2.5573 14.4629 2.7866 14.6929 3.06885 14.8367C3.3894 15 3.80925 15 4.64768 15H13.3523C14.1908 15 14.61 15 14.9305 14.8367C15.2128 14.6929 15.4429 14.4631 15.5867 14.1808C15.7502 13.86 15.7502 13.4399 15.7502 12.5999L15.7502 6.89983C15.7502 6.05975 15.7502 5.63972 15.5867 5.31885C15.4429 5.0366 15.2129 4.8073 14.9307 4.66349C14.6098 4.5 14.1901 4.5 13.35 4.5H9M2.25 4.5H9M2.25 4.5C2.25 3.67157 2.92157 3 3.75 3H6.50589C6.87277 3 7.05665 3 7.22928 3.04145C7.38233 3.07819 7.52839 3.13895 7.6626 3.22119C7.81392 3.31392 7.94386 3.44386 8.20312 3.70313L9 4.5" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span>Raw Data</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden native select for compatibility -->
+            <select id="exportFormatSelect" style="display:none;">
+              <option value="condensed" selected>Smart Summary</option>
+              <option value="plain">Full Conversation</option>
+              <option value="json">Raw Data</option>
+            </select>
+
+            <!-- Counter control & context range selector -->
+            <div class="fig-depth-counter-wrap">
+              <span class="fig-depth-label">Included Context Depth</span>
+              <div class="fig-depth-controls">
+                <div class="fig-depth-stepper">
+                  <button type="button" id="btnDepthDec" class="fig-stepper-btn" title="Decrease depth">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5H8" stroke="#878685" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  </button>
+                  <span class="fig-stepper-divider"></span>
+                  <span class="fig-depth-number" id="depthTurnsNumber">--</span>
+                  <span class="fig-stepper-divider"></span>
+                  <button type="button" id="btnDepthInc" class="fig-stepper-btn" title="Increase depth">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 2V8M2 5H8" stroke="#878685" stroke-width="1.2" stroke-linecap="round"/></svg>
+                  </button>
+                </div>
+                <button type="button" id="btnDepthAll" class="fig-depth-all-pill active">All</button>
+              </div>
+              <input type="number" id="limitCount" min="0" value="0" style="display:none;" />
+            </div>
+          </div>
+
+          <!-- Metrics Pills Row -->
+          <div class="fig-metrics-row" id="metricsPillsRow">
+            <div class="fig-metric-pill" id="tokenCountBadge">
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                <path d="M4.5 10.5L9.75 1.5V7.5H13.5L8.25 16.5V10.5H4.5Z" stroke="#878685" stroke-width="1.2" stroke-linejoin="round"/>
+              </svg>
+              <span>~1,167 tokens</span>
+            </div>
+            <div class="fig-metric-pill" id="charCountBadge">
+              <span>~691 words</span>
+            </div>
+            <div class="fig-metric-pill compression" id="compressionRatioBadge">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <polygon points="2,1 9,5 2,9" fill="#373634" />
+              </svg>
+              <span>-88% compressed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Attachments & Logs Summary -->
+        <div id="attachmentsPreviewContainer" class="fig-attachments-card">
+          <div class="fig-attachments-left">
+            <div class="fig-attachment-icon-box">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.5 8.75L3.5 5.25C3.5 3.317 5.067 1.75 7 1.75C8.933 1.75 10.5 3.317 10.5 5.25V9.91667C10.5 11.2053 9.45533 12.25 8.16667 12.25C6.878 12.25 5.83333 11.2053 5.83333 9.91667V5.25C5.83333 4.60567 6.35567 4.08333 7 4.08333C7.64433 4.08333 8.16667 4.60567 8.16667 5.25V9.91667" stroke="#373634" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="fig-attachment-meta">
+              <div class="fig-attachment-heading">Attached Context & Logs</div>
+              <div class="fig-attachment-subtext" id="attachmentsCountText">logcat_xpulse.txt • 2 screenshot artifacts</div>
+            </div>
+          </div>
+          <div class="fig-attachments-right">
+            <button class="fig-attachment-edit-btn" id="btnEditAttachments">Edit</button>
+            <div id="attachmentsList" class="fig-attachment-chips-list hidden"></div>
+          </div>
+        </div>
+
+        <!-- Section: Chat Preview Container -->
+        <div class="fig-preview-box-container">
+          <div class="fig-preview-box-header">
+            <div class="fig-preview-label-wrap">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 14C11.3137 14 14 11.3137 14 7.99997C14 4.68626 11.3137 1.99997 8 1.99997C4.68629 1.99997 2 4.68626 2 7.99997C2 8.99172 2.24062 9.92728 2.66667 10.7514L2 14L5.24853 13.3333C6.07269 13.7593 7.00825 14 8 14Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="5" y="8" width="0.00666667" height="0.00666667" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+                <rect x="8" y="8" width="0.00666667" height="0.00666667" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+                <rect x="11" y="8" width="0.00666667" height="0.00666667" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+              <span id="previewBoxTranscriptLabel">TRANSCRIPT</span>
+            </div>
+          </div>
+
+          <div class="fig-preview-content-area">
+            <textarea id="previewContent" class="fig-preview-textarea hidden" style="display:none !important;" readonly spellcheck="false"></textarea>
+            <!-- Formatted conversation turns view (mirrors Figma card turn blocks) -->
+            <div id="previewFormattedTurns" class="fig-formatted-turns-view"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer: Primary Action Dock -->
+      <footer class="fig-action-dock">
+        <div class="fig-action-dock-inner">
+          <button id="btnCopyClipboard" class="fig-dock-btn copy">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3937)">
+<path d="M10.6666 2H2.66663V10.6667" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.33337 4.66669H13.3334V12C13.3334 13.1046 12.4379 14 11.3334 14H7.33337C6.2288 14 5.33337 13.1046 5.33337 12V4.66669Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3937">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            <span>Copy</span>
+          </button>
+          <button id="btnInjectInput" class="fig-dock-btn primary">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8.38367 1.42149C8.68974 1.51774 8.89794 1.80149 8.89792 2.12234V5.79558H11.8365C12.1104 5.79545 12.3617 5.94773 12.4883 6.19063C12.6149 6.43352 12.5959 6.72669 12.4389 6.95118L7.29639 14.2976C7.11271 14.5608 6.77947 14.6743 6.47336 14.5779C6.16725 14.4815 5.95913 14.1976 5.95933 13.8767V10.2035H3.02074C2.74683 10.2036 2.49559 10.0513 2.36897 9.80841C2.24235 9.56551 2.26138 9.27235 2.41833 9.04786L7.56086 1.70139C7.74481 1.43874 8.07786 1.32573 8.38367 1.42222V1.42149Z" fill="#373634"/>
+</svg>
+            <span>Paste to Active AI</span>
+          </button>
+          <button id="btnSynthesizePrompt" class="fig-dock-btn synthesize">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3950)">
+<path d="M4.5 10.5L9.75 1.5V7.5H13.5L8.25 16.5V10.5H4.5Z" stroke="#DCEB7D" stroke-width="1.5" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3950">
+<rect width="18" height="18" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            <span>Synthesize</span>
+          </button>
+        </div>
+      </footer>
+    </div>
+
+
+    <!-- ==================================================== -->
+    <!-- 3. SETTINGS VIEW: SETTINGS & PREFERENCES             -->
+    <!-- ==================================================== -->
+    <div id="settingsView" class="view-screen hidden">
+      <!-- TopHeader with Back & Version Badge -->
+      <header class="fig-settings-topheader">
+        <div class="fig-settings-nav-row">
+          <button id="btnBackFromSettings" class="fig-btn-back-pill">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_9_3960)">
+<path d="M3.33337 8H12.6667" stroke="#5F5E5D" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.00004 3.33333L3.33337 8L8.00004 12.6667" stroke="#5F5E5D" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_9_3960">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>
+            <span>Back</span>
+          </button>
+          <div class="fig-version-badge">
+            <span class="fig-version-dot"></span>
+            <span>v1.0.0</span>
+          </div>
+        </div>
+
+        <div class="fig-settings-screen-title">
+          <div class="fig-settings-title-wrap">
+            <h2>Settings & Preferences</h2>
+            <p>Customize PromptPort extension</p>
+          </div>
+          <div class="fig-settings-icon-badge">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M10.5 13.5H15.75M2.25 13.5H3.75M3.75 13.5C3.75 14.5355 4.58947 15.375 5.625 15.375C6.66053 15.375 7.5 14.5355 7.5 13.5C7.5 12.4645 6.66053 11.625 5.625 11.625C4.58947 11.625 3.75 12.4645 3.75 13.5ZM15 9H15.75M2.25 9H7.5M9.75 4.5H15.75M9.75 4.5C9.75 3.46447 8.91053 2.625 7.875 2.625C6.83947 2.625 6 3.46447 6 4.5C6 5.53553 6.83947 6.375 7.875 6.375C8.91053 6.375 9.75 5.53553 9.75 4.5ZM2.25 4.5H3M12.375 10.875C11.3395 10.875 10.5 10.0355 10.5 9C10.5 7.96447 11.3395 7.125 12.375 7.125C13.4105 7.125 14.25 7.96447 14.25 9C14.25 10.0355 13.4105 10.875 12.375 10.875Z" stroke="#878685" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- Settings Scroll Area with Cards 1-5 -->
+      <div class="fig-settings-scroll-area">
+
+        <!-- Card 1: Appearance & Theme -->
+        <div class="fig-settings-card">
+          <div class="fig-card-header">
+            <div class="fig-card-header-left">
+              <div class="fig-card-icon-wrap" style="background:#EAF3B1;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M8.66663 4.33333C8.66663 4.51731 8.81599 4.66667 8.99996 4.66667C9.18393 4.66667 9.33329 4.51731 9.33329 4.33333C9.33329 4.14936 9.18393 4 8.99996 4C8.81599 4 8.66663 4.14936 8.66663 4.33333Z" fill="#5F5E5D"/>
+<path d="M8.66663 4.33333C8.66663 4.51731 8.81599 4.66667 8.99996 4.66667C9.18393 4.66667 9.33329 4.51731 9.33329 4.33333C9.33329 4.14936 9.18393 4 8.99996 4C8.81599 4 8.66663 4.14936 8.66663 4.33333V4.33333" stroke="#5F5E5D" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11.3334 7.00001C11.3334 7.18398 11.4827 7.33334 11.6667 7.33334C11.8507 7.33334 12 7.18398 12 7.00001C12 6.81603 11.8507 6.66667 11.6667 6.66667C11.4827 6.66667 11.3334 6.81603 11.3334 7.00001Z" fill="#5F5E5D"/>
+<path d="M11.3334 7.00001C11.3334 7.18398 11.4827 7.33334 11.6667 7.33334C11.8507 7.33334 12 7.18398 12 7.00001C12 6.81603 11.8507 6.66667 11.6667 6.66667C11.4827 6.66667 11.3334 6.81603 11.3334 7.00001V7.00001" stroke="#5F5E5D" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M5.33337 5.00001C5.33337 5.18398 5.48274 5.33334 5.66671 5.33334C5.85068 5.33334 6.00004 5.18398 6.00004 5.00001C6.00004 4.81603 5.85068 4.66667 5.66671 4.66667C5.48274 4.66667 5.33337 4.81603 5.33337 5.00001Z" fill="#5F5E5D"/>
+<path d="M5.33337 5.00001C5.33337 5.18398 5.48274 5.33334 5.66671 5.33334C5.85068 5.33334 6.00004 5.18398 6.00004 5.00001C6.00004 4.81603 5.85068 4.66667 5.66671 4.66667C5.48274 4.66667 5.33337 4.81603 5.33337 5.00001V5.00001" stroke="#5F5E5D" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4 8.33333C4 8.51731 4.14936 8.66667 4.33333 8.66667C4.51731 8.66667 4.66667 8.51731 4.66667 8.33333C4.66667 8.14936 4.51731 8 4.33333 8C4.14936 8 4 8.14936 4 8.33333Z" fill="#5F5E5D"/>
+<path d="M4 8.33333C4 8.51731 4.14936 8.66667 4.33333 8.66667C4.51731 8.66667 4.66667 8.51731 4.66667 8.33333C4.66667 8.14936 4.51731 8 4.33333 8C4.14936 8 4 8.14936 4 8.33333V8.33333" stroke="#5F5E5D" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M8.00004 1.33333C4.33337 1.33333 1.33337 4.33333 1.33337 8C1.33337 11.6667 4.33337 14.6667 8.00004 14.6667C8.61737 14.6667 9.09871 14.1693 9.09871 13.5413C9.09871 13.25 8.97871 12.9847 8.80737 12.7913C8.61404 12.5987 8.51537 12.3567 8.51537 12.0413C8.51027 11.7449 8.62578 11.4591 8.83544 11.2494C9.0451 11.0397 9.33092 10.9242 9.62737 10.9293H10.958C12.992 10.9293 14.6667 9.25466 14.6667 7.22066C14.6647 4.33333 11.6667 1.33333 8.00004 1.33333V1.33333" stroke="#5F5E5D" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+              </div>
+              <h3 class="fig-card-title">Appearance & Theme</h3>
+            </div>
+            <span class="fig-card-badge">DISPLAY</span>
+          </div>
+
+          <div class="fig-radiogroup">
+            <label class="fig-radio-card" id="themeLabelSystem">
+              <div class="fig-radio-info">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9.99996 13.3333H5.99996M2.66663 9.20013V5.46679C2.66663 4.72006 2.66663 4.34641 2.81195 4.06119C2.93978 3.81031 3.14361 3.60648 3.39449 3.47865C3.67971 3.33333 4.05335 3.33333 4.80009 3.33333H11.2001C11.9468 3.33333 12.3197 3.33333 12.6049 3.47865C12.8558 3.60648 13.0603 3.81031 13.1881 4.06119C13.3333 4.34613 13.3333 4.71932 13.3333 5.4646V9.20206C13.3333 9.94733 13.3333 10.32 13.1881 10.6049C13.0603 10.8558 12.8558 11.0603 12.6049 11.1881C12.32 11.3333 11.9473 11.3333 11.202 11.3333H4.7979C4.05262 11.3333 3.67943 11.3333 3.39449 11.1881C3.14361 11.0603 2.93978 10.8558 2.81195 10.6049C2.66663 10.3197 2.66663 9.94686 2.66663 9.20013Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>System Default</span>
+              </div>
+              <input type="radio" name="appTheme" value="system" class="fig-radio-input" checked />
+              <span class="fig-radio-circle"></span>
+            </label>
+
+            <label class="fig-radio-card" id="themeLabelLight">
+              <div class="fig-radio-info">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="8.00004" cy="8.00001" r="2.66667" stroke="#5F5E5D" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M13.3334 8H14M2 8H2.66667M8 13.3333L8 14M8 2L8 2.66667M11.7712 11.7712L12.2426 12.2426M3.75732 3.75735L4.22873 4.22876M4.22876 11.7712L3.75736 12.2426M12.2427 3.75735L11.7713 4.22876" stroke="#5F5E5D" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span>Light Mode</span>
+              </div>
+              <input type="radio" name="appTheme" value="light" class="fig-radio-input" />
+              <span class="fig-radio-circle"></span>
+            </label>
+
+            <label class="fig-radio-card" id="themeLabelDark">
+              <div class="fig-radio-info">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.19238 2.00488L8.91145 2.21805C8.97753 1.99515 8.9365 1.7542 8.80036 1.56573C8.66423 1.37726 8.44838 1.26258 8.216 1.25525L8.19238 2.00488ZM8 3.33301L7.25 3.33296V3.33301H8ZM12.667 8V8.75H12.667L12.667 8ZM13.9941 7.80664L14.7438 7.7829C14.7364 7.55056 14.6217 7.33476 14.4333 7.19865C14.2449 7.06254 14.0039 7.0215 13.7811 7.08754L13.9941 7.80664ZM14 8H14.75V8H14ZM2 8H1.25V8H2ZM8.19238 2.00488L7.47332 1.79171C7.3284 2.28055 7.25004 2.79795 7.25 3.33296L8 3.33301L8.75 3.33306C8.75003 2.94512 8.80676 2.57119 8.91145 2.21805L8.19238 2.00488ZM8 3.33301H7.25C7.25 6.32455 9.67545 8.75 12.667 8.75V8V7.25C10.5039 7.25 8.75 5.49612 8.75 3.33301H8ZM12.667 8L12.667 8.75C13.2031 8.74996 13.7199 8.67013 14.2072 8.52574L13.9941 7.80664L13.7811 7.08754C13.4268 7.19252 13.0533 7.24997 12.6669 7.25L12.667 8ZM13.9941 7.80664L13.2445 7.83038C13.2475 7.92331 13.25 7.95001 13.25 8H14H14.75C14.75 7.92054 14.7449 7.81844 14.7438 7.7829L13.9941 7.80664ZM14 8H13.25C13.25 10.8995 10.8995 13.25 8 13.25V14V14.75C11.7279 14.75 14.75 11.7279 14.75 8H14ZM8 14V13.25C5.10051 13.25 2.75 10.8995 2.75 8H2H1.25C1.25 11.7279 4.27208 14.75 8 14.75V14ZM2 8H2.75C2.75 5.10051 5.10051 2.75 8 2.75V2V1.25C4.27208 1.25 1.25 4.27208 1.25 8H2ZM8 2V2.75C8.04869 2.75 8.09163 2.75208 8.16876 2.75451L8.19238 2.00488L8.216 1.25525C8.16534 1.25366 8.08009 1.25 8 1.25V2Z" fill="#5F5E5D"/>
+                </svg>
+                <span>Dark Mode</span>
+              </div>
+              <input type="radio" name="appTheme" value="dark" class="fig-radio-input" />
+              <span class="fig-radio-circle"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card 2: Default Export Format -->
+        <div class="fig-settings-card">
+          <div class="fig-card-header">
+            <div class="fig-card-header-left">
+              <div class="fig-card-icon-wrap" style="background:#EEF3E1;">
+                <svg width="18" height="18" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 15.3333L14.6667 7.33334V12.6667H18L13.3333 20.6667V15.3333H10Z" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="fig-card-title">Default Export Format</h3>
+                <p class="fig-card-subtitle">Choose the default context format when transferring chats.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fig-settings-field">
+            <!-- Custom Styled Dropdown matching Figma 9:4042 -->
+            <div class="fig-custom-dropdown-wrap" id="customFormatDropdownWrap">
+              <select id="settingDefaultFormat" style="display:none;">
+                <option value="condensed" selected>Smart Summary</option>
+                <option value="plain">Full Conversation</option>
+                <option value="json">Raw Data</option>
+              </select>
+              <button type="button" class="fig-dropdown-trigger" id="customFormatDropdownTrigger" aria-haspopup="listbox" aria-expanded="false">
+                <div class="fig-dropdown-current">
+                  <span class="fig-dropdown-icon" id="customFormatSelectedIcon">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 9.75L9 2.25V7.5H13.5L9 15.75V10.5H4.5Z" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                  </span>
+                  <span class="fig-dropdown-label" id="customFormatSelectedLabel">Smart Summary</span>
+                </div>
+                <svg class="fig-dropdown-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M4 6L8 10L12 6" stroke="#5F5E5D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <div class="fig-dropdown-menu hidden" id="customFormatDropdownMenu" role="listbox">
+                <div class="fig-dropdown-item active" data-value="condensed" role="option">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4.5 9.75L9 2.25V7.5H13.5L9 15.75V10.5H4.5Z" stroke="#373634" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                  <span>Smart Summary</span>
+                </div>
+                <div class="fig-dropdown-item" data-value="plain" role="option">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2.25 3H15.75V12C15.75 12.8284 15.0784 13.5 14.25 13.5H5.25L2.25 15.75V3Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Full Conversation</span>
+                </div>
+                <div class="fig-dropdown-item" data-value="json" role="option">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M2.25 4.5H6.75L8.25 6H15.75V13.5H2.25V4.5Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>Raw Data</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fig-sub-toggle-row">
+            <div class="fig-sub-toggle-text">
+              <span class="fig-sub-toggle-title">Auto-strip system noise & prompts</span>
+              <span class="fig-sub-toggle-desc">Cleans metadata before context transfer</span>
+            </div>
+            <label class="fig-switch">
+              <input type="checkbox" id="settingAutoStripNoise" checked />
+              <span class="fig-switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card 3: Chatbox Floating Action Button -->
+        <div class="fig-settings-card">
+          <div class="fig-card-header">
+            <div class="fig-card-header-left">
+              <div class="fig-card-icon-wrap" style="background:#EEF3E1;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1.33337 7.99998C1.33337 11.6794 4.32061 14.6666 8.00004 14.6666C11.6795 14.6666 14.6667 11.6794 14.6667 7.99998C14.6667 4.32055 11.6795 1.33331 8.00004 1.33331C4.32061 1.33331 1.33337 4.32055 1.33337 7.99998V7.99998" stroke="#373634" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M6 8C6 9.10383 6.89617 10 8 10C9.10383 10 10 9.10383 10 8C10 6.89617 9.10383 6 8 6C6.89617 6 6 6.89617 6 8V8" stroke="#373634" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="fig-card-title">Chatbox Floating Action Button</h3>
+                <p class="fig-card-subtitle">Show the circular quick-capture overlay button directly on supported AI websites.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fig-toggle-row">
+            <span class="fig-toggle-label">Enable in-page floating quick-capture button</span>
+            <label class="fig-switch">
+              <input type="checkbox" id="settingShowFloatingBtn" checked />
+              <span class="fig-switch-slider"></span>
+            </label>
+          </div>
+
+          <div class="fig-position-row">
+            <span class="fig-position-label">Screen Position</span>
+            <div class="fig-position-switch" id="positionSwitchGroup">
+              <button type="button" class="fig-pos-btn" data-pos="bottom-left">Bottom-left</button>
+              <button type="button" class="fig-pos-btn active" data-pos="bottom-right">Bottom-right</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Security & Passphrase -->
+        <div class="fig-settings-card">
+          <div class="fig-card-header">
+            <div class="fig-card-header-left">
+              <div class="fig-card-icon-wrap" style="background:#EEF3E1;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2.66663" y="6" width="10.6667" height="8" rx="4" stroke="#373634" stroke-width="1.5"/>
+                  <path d="M8 10.6666L8 9.33331" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10.6667 6V4.66667C10.6667 3.19391 9.4728 2 8.00004 2C6.52728 2 5.33337 3.19391 5.33337 4.66667L5.33337 6" stroke="#373634" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="fig-card-title">Security & Passphrase</h3>
+                <p class="fig-card-subtitle">AES-256 in-memory encryption protect active clipboard.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fig-security-box">
+            <div class="fig-security-box-text">
+              <span class="fig-security-main">Master Passphrase</span>
+              <span class="fig-security-sub">Last updated 12 days ago</span>
+            </div>
+            <button class="fig-btn-outline-sm" id="btnChangePassphrase">Change</button>
+          </div>
+
+          <div class="fig-autolock-row">
+            <span class="fig-autolock-label">Auto-lock timeout</span>
+            <div class="fig-autolock-select-wrap">
+              <select id="settingAutoLock" class="fig-autolock-select">
+                <option value="15">After 15 minutes</option>
+                <option value="30" selected>After 30 minutes</option>
+                <option value="60">After 1 hour</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Backup & Storage -->
+        <div class="fig-settings-card">
+          <div class="fig-card-header">
+            <div class="fig-card-header-left">
+              <div class="fig-card-icon-wrap" style="background:#EEF3E1;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2.66663 5.33331H13.3333V11.3333C13.3333 12.4379 12.4379 13.3333 11.3333 13.3333H4.66663C3.56206 13.3333 2.66663 12.4379 2.66663 11.3333V5.33331Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5.33329 2.66669H10.6666L13.3333 5.33335H2.66663L5.33329 2.66669Z" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5.33337 8H8.00004" stroke="#373634" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 class="fig-card-title">Backup & Storage</h3>
+                <p class="fig-card-subtitle">Export or restore all encrypted chat archives locally.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fig-backup-btns-row">
+            <button id="btnExportAllJson" class="fig-backup-pill primary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 2.66669V11.3334M8 2.66669L4.66663 6.00002M8 2.66669L11.3333 6.00002" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 13.3333H12" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Export JSON</span>
+            </button>
+            <button id="btnImportJson" class="fig-backup-pill secondary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 11.3333V2.66665M8 11.3333L4.66663 7.99998M8 11.3333L11.3333 7.99998" stroke="#373634" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 13.3333H12" stroke="#373634" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Restore Backup</span>
+            </button>
+            <input type="file" id="fileImportBackup" accept=".json" style="display:none;" />
+          </div>
+
+          <div class="fig-danger-zone">
+            <button id="btnDangerReset" class="fig-danger-btn">Clear All Stored Data & Reset Extension</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="side_panel.js"></script>
+</body>
+</html>
