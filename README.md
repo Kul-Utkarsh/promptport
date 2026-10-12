@@ -30,8 +30,8 @@
 - [Architecture & Data Flow](#architecture--data-flow)
 - [Supported Platforms](#supported-platforms)
 - [Installation](#installation)
-  - [Method 1: Chrome Web Store (Recommended)](#method-1-chrome-web-store-recommended)
-  - [Method 2: Manual Installation (Developer Mode)](#method-2-manual-installation-developer-mode)
+  - [Method 1: Ready-to-Use ZIP Package (Recommended)](#method-1-ready-to-use-zip-package-easiest--fastest--no-git-needed)
+  - [Method 2: Build from Source](#method-2-build-from-source)
 - [User Guide & Workflows](#user-guide--workflows)
   - [1. Capturing Conversations](#1-capturing-conversations)
   - [2. Managing & Searching Sessions](#2-managing--searching-sessions)
@@ -155,12 +155,7 @@ You do **not** need to download the whole repository or install any developer to
 6. Click **Load unpacked** (top-left) and select the unzipped folder.
 7. Done! The PromptPort icon is now active in your toolbar.
 
-### Method 2: Chrome Web Store
-1. Visit the [PromptPort Chrome Web Store listing](https://chromewebstore.google.com/) *(coming soon)*.
-2. Click **Add to Chrome**.
-3. Pin the extension to your toolbar for instant access.
-
-### Method 3: Build from Source
+### Method 2: Build from Source
 If you are developing or contributing:
 1. Clone this repository:
    ```bash
