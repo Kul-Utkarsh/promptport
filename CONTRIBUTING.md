@@ -1,4 +1,4 @@
-﻿# Contributing to PromptPort
+# Contributing to PromptPort
 
 Thank you for your interest in contributing to **PromptPort**! We welcome bug reports, feature suggestions, new AI platform integrations, UI improvements, and documentation enhancements.
 
@@ -6,53 +6,45 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
 
 ---
 
-## Repository Structure & Workflow
+## Repository Structure
 
-To maintain clean public releases while preserving full testing harnesses, the repository is split into two zones:
+The repository contains the standalone Chrome extension and GitHub community resources:
 
 ```
-├── dev/                 # Active development environment
-│   ├── background.js    # Service worker
-│   ├── content.js       # Content script (scrapers & injection)
-│   ├── side_panel.js    # UI logic
-│   ├── side_panel.html  # UI markup
-│   ├── side_panel.css   # Styles
-│   ├── manifest.json    # Development manifest
-│   ├── tests/           # Unit tests & browser mocks
-│   └── figma_icons/     # Design source references
-├── public/              # Clean public distribution & GitHub release package
-│   ├── (production runtime files & documentation)
-└── scripts/
-    └── sync_public.js   # Automated synchronization script
+├── manifest.json        # Extension Manifest V3
+├── background.js        # Background Service Worker
+├── content.js           # Content script (DOM scrapers & chatbox injection)
+├── side_panel.html      # Companion Side Panel markup
+├── side_panel.css       # Design system styles & themes
+├── side_panel.js        # Side Panel logic & state bindings
+├── icons/               # Extension icons (16, 32, 48, 128)
+└── .github/             # CI workflows, issue templates & PR template
 ```
-
-> [!IMPORTANT]
-> **Always make code modifications inside `dev/`**.  
-> When you run `npm run sync:public`, your tested changes in `dev/` are validated and synchronized into `public/`.
 
 ---
 
 ## Getting Started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18.0.0 or higher)
-- Google Chrome, Microsoft Edge, Brave, or any Chromium browser (v116+)
+- [Node.js](https://nodejs.org/) (v18.0.0 or higher) — for running syntax validation.
+- Google Chrome, Microsoft Edge, Brave, Arc, or any Chromium browser (v116+).
 
 ### Installation & Local Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/ai-chat-context-bridge.git
-   cd ai-chat-context-bridge
+   git clone https://github.com/Kul-Utkarsh/promptport.git
+   cd promptport
    ```
-2. Verify existing tests:
+2. Verify JavaScript syntax:
    ```bash
-   npm test
+   node -c background.js content.js side_panel.js
    ```
 3. Load the unpacked extension into Chrome:
    - Open Chrome and navigate to `chrome://extensions/`.
    - Enable **Developer mode** via the toggle in the top-right corner.
-   - Click **Load unpacked**.
-   - Select either the `dev/` folder (for live debugging) or `public/` folder.
+   - Click **Load unpacked** (top-left).
+   - Select the cloned repository folder.
+   - PromptPort is now active and ready for testing!
 
 ---
 
@@ -60,7 +52,7 @@ To maintain clean public releases while preserving full testing harnesses, the r
 
 Adding support for a new AI chat service (e.g. Mistral, Perplexity, Poe) is straightforward:
 
-### Step 1: Update `dev/manifest.json`
+### Step 1: Update `manifest.json`
 Add the platform's URL pattern to both `host_permissions` and `content_scripts.matches`:
 ```json
 "host_permissions": [
@@ -68,7 +60,7 @@ Add the platform's URL pattern to both `host_permissions` and `content_scripts.m
 ]
 ```
 
-### Step 2: Update `detectSite()` in `dev/content.js`
+### Step 2: Update `detectSite()` in `content.js`
 Add the hostname detection check:
 ```javascript
 function detectSite() {
@@ -79,7 +71,7 @@ function detectSite() {
 }
 ```
 
-### Step 3: Implement the Scraper in `scrapers` object in `dev/content.js`
+### Step 3: Implement the Scraper in `scrapers` object in `content.js`
 Create a dedicated scraper returning an array of `{ role: 'user' | 'assistant', text: string, attachments: Array, ts: number }`:
 ```javascript
 NewPlatform: function () {
@@ -100,14 +92,12 @@ NewPlatform: function () {
 ```
 
 ### Step 4: Ensure Input Injection Works
-In `injectTextIntoChatInput()` in `dev/content.js`, ensure the input selector for the chat composer is included in `selectors` list.
+In `injectTextIntoChatInput()` in `content.js`, ensure the input selector for the chat composer is included in the `selectors` list.
 
-### Step 5: Test and Sync
-Run the test suite and sync:
+### Step 5: Validate Syntax
+Run a syntax check to verify no syntax errors:
 ```bash
-npm test
-npm run check
-npm run sync:public
+node -c background.js content.js side_panel.js
 ```
 
 ---
@@ -134,13 +124,11 @@ npm run sync:public
    ```bash
    git checkout -b feature/add-mistral-scraper
    ```
-2. Verify all tests pass locally:
+2. Verify all syntax checks pass locally:
    ```bash
-   npm test
-   npm run check
-   npm run sync:public
+   node -c background.js content.js side_panel.js
    ```
-3. Commit your changes with clear commit messages:
+3. Commit your changes with a clear commit message:
    ```bash
    git commit -m "feat(scraper): add Mistral AI chat extraction and input injection"
    ```

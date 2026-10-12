@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 All notable changes to the **PromptPort** project will be documented in this file.
 
@@ -26,9 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Light, Dark, and System theme synchronization.
   - Toggleable floating capture tray button with left/right positioning.
 - **GitHub Community Standards**:
-  - Automated sync build script (`scripts/sync_public.js`).
-  - Unit test suite with mock browser environment (`dev/tests/core_seams.test.js`).
-  - GitHub Actions CI workflow for syntax and manifest validation.
+  - Automated GitHub Actions CI workflow for syntax and manifest validation.
+  - Automated release packaging workflow (`release.yml`).
   - Issue templates and pull request templates.
 
 ### Security

@@ -155,18 +155,17 @@ You do **not** need to download the whole repository or install any developer to
 6. Click **Load unpacked** (top-left) and select the unzipped folder.
 7. Done! The PromptPort icon is now active in your toolbar.
 
-### Method 2: Build from Source
-If you are developing or contributing:
+### Method 2: Load from Source (Developers & Contributors)
+If you want to run from source or contribute:
 1. Clone this repository:
    ```bash
    git clone https://github.com/Kul-Utkarsh/promptport.git
    cd promptport
    ```
-2. Build the extension package:
-   ```bash
-   npm run pack
-   ```
-3. Load either the `public/` folder or the generated `release/promptport-v1.0.0.zip` (unzipped) into `chrome://extensions/` via **Load unpacked**.
+2. Open Google Chrome and navigate to `chrome://extensions/`.
+3. Toggle on **Developer mode** in the top-right corner.
+4. Click **Load unpacked** (top-left) and select the cloned `promptport` folder.
+5. Done! PromptPort is running directly from source.
 
 ---
 
@@ -229,30 +228,25 @@ For detailed security disclosures and permissions justifications, read [SECURITY
 
 ---
 
-## Development & Building from Source
+## Development & Contributing
 
-The repository separates the development environment (`dev/`) from the sanitized release package (`public/`):
+To test or modify PromptPort locally:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/promptport.git
+git clone https://github.com/Kul-Utkarsh/promptport.git
 cd promptport
 
-# 2. Run unit tests
-npm test
-
-# 3. Check JavaScript syntax
-npm run check
-
-# 4. Synchronize dev updates to public distribution
-npm run sync:public
+# 2. Validate JavaScript syntax
+node -c background.js content.js side_panel.js
 ```
 
-### NPM Scripts
-- `npm test`: Runs automated unit tests (`dev/tests/core_seams.test.js`) against mock browser environments.
-- `npm run check`: Performs syntax validation (`node -c`) on all JavaScript files.
-- `npm run sync:public`: Validates code, runs tests, and copies runtime files from `dev/` to `public/`.
-- `npm run test:public`: Verifies public distribution syntax integrity.
+### Testing Live in Chrome
+1. Open `chrome://extensions/`.
+2. Toggle on **Developer mode** in the top-right corner.
+3. Click **Load unpacked** and select the repository folder.
+4. Open any supported AI platform (ChatGPT, Claude, Gemini, DeepSeek) to test your changes.
+For full contributing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
