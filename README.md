@@ -145,25 +145,33 @@ flowchart TD
 
 ## Installation
 
-### Method 1: Chrome Web Store (Recommended)
+### Method 1: Ready-to-Use ZIP Package (Easiest & Fastest — No Git Needed!)
+You do **not** need to download the whole repository or install any developer tools:
+1. Go to the [Releases](https://github.com/Kul-Utkarsh/promptport/releases) page.
+2. Under **Assets**, download **`promptport-v1.0.0.zip`** (lightweight ~56 KB package containing strictly the files needed to run the extension).
+3. Unzip the downloaded file to a folder on your computer.
+4. Open Google Chrome (or Edge/Brave/Arc) and go to `chrome://extensions/`.
+5. Toggle on **Developer mode** in the top-right corner.
+6. Click **Load unpacked** (top-left) and select the unzipped folder.
+7. Done! The PromptPort icon is now active in your toolbar.
+
+### Method 2: Chrome Web Store
 1. Visit the [PromptPort Chrome Web Store listing](https://chromewebstore.google.com/) *(coming soon)*.
 2. Click **Add to Chrome**.
 3. Pin the extension to your toolbar for instant access.
 
-### Method 2: Manual Installation (Developer Mode)
-You can load the latest release directly from this repository:
-
-1. **Clone or Download** this repository:
+### Method 3: Build from Source
+If you are developing or contributing:
+1. Clone this repository:
    ```bash
-   git clone https://github.com/your-username/promptport.git
+   git clone https://github.com/Kul-Utkarsh/promptport.git
+   cd promptport
    ```
-   *(Or click **Code** -> **Download ZIP** and extract the folder).*
-2. Open your Chromium browser (Chrome, Edge, Brave, Arc, Opera, Vivaldi).
-3. Navigate to `chrome://extensions/` (or `edge://extensions/`).
-4. Toggle on **Developer mode** in the top-right corner.
-5. Click the **Load unpacked** button in the top-left corner.
-6. Select the **`public/`** folder inside the extracted project directory.
-7. The PromptPort icon will appear in your extensions tray!
+2. Build the extension package:
+   ```bash
+   npm run pack
+   ```
+3. Load either the `public/` folder or the generated `release/promptport-v1.0.0.zip` (unzipped) into `chrome://extensions/` via **Load unpacked**.
 
 ---
 
