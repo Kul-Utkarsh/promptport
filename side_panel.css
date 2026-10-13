@@ -411,7 +411,8 @@ body {
 .fig-ai-tag.claude { background-color: var(--tag-claude); }
 .fig-ai-tag.z-ai { background-color: var(--tag-z-ai); }
 .fig-ai-tag.deepseek { background-color: var(--tag-deepseek); }
-.fig-ai-tag.generic { background-color: var(--c-tuatara); }
+.fig-ai-tag.other,
+.fig-ai-tag.generic { background-color: #5F5E5D; color: #FFFFFF; border: 0.5px solid rgba(255, 255, 255, 0.15); }
 
 .fig-card-count-wrap {
   display: flex;

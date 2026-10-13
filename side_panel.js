@@ -1,4 +1,4 @@
-﻿const FIGMA_ICONS = {
+const FIGMA_ICONS = {
   messages: "<svg width=\"18\" height=\"18\" viewBox=\"0 0 18 18\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M7.00361 11.9928C9.37092 11.8614 11.25 9.90019 11.25 7.5C11.25 5.01472 9.23528 3 6.75 3C4.26472 3 2.25 5.01472 2.25 7.5C2.25 8.38553 2.5057 9.21127 2.94742 9.90747L2.62939 10.8615L2.62889 10.8629C2.50708 11.2284 2.44615 11.4111 2.48954 11.5328C2.52734 11.6388 2.61126 11.7224 2.71729 11.7602C2.83854 11.8035 3.02006 11.7429 3.38302 11.622L3.38818 11.6204L4.34253 11.3024C5.03873 11.7441 5.86451 11.9999 6.75005 11.9999C6.83514 11.9999 6.91968 11.9975 7.00361 11.9928ZM7.00361 11.9928C7.00367 11.993 7.00354 11.9927 7.00361 11.9928ZM7.00361 11.9928C7.6193 13.7444 9.28807 15.0001 11.2501 15.0001C12.1356 15.0001 12.9612 14.7441 13.6574 14.3024L14.6115 14.6204L14.6134 14.6208C14.9788 14.7426 15.1619 14.8036 15.2835 14.7602C15.3896 14.7224 15.4724 14.6388 15.5102 14.5328C15.5537 14.411 15.4929 14.228 15.3708 13.8616L15.0527 12.9075L15.1593 12.731C15.5353 12.0735 15.7496 11.3117 15.7496 10.5C15.7496 8.01473 13.7353 6 11.25 6L11.0815 6.0031L10.9966 6.00726\" stroke=\"#878685\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n</svg>",
   star: "<svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.33431 2.04889C6.54431 1.40419 7.45641 1.40419 7.66571 2.04889L8.41471 4.35329C8.50857 4.64118 8.7769 4.83607 9.07971 4.83629H11.5031C12.1814 4.83629 12.4628 5.70429 11.9147 6.10329L9.95471 7.52709C9.70919 7.7052 9.60631 8.02117 9.69991 8.30969L10.4489 10.6141C10.6589 11.2588 9.92041 11.7957 9.37091 11.3967L7.41091 9.97289C7.16565 9.79484 6.83366 9.79484 6.58841 9.97289L4.62841 11.3967C4.07961 11.7957 3.34181 11.2588 3.55111 10.6141L4.30011 8.30969C4.3937 8.02117 4.29083 7.7052 4.04531 7.52709L2.08601 6.10399C1.53791 5.70499 1.82001 4.83699 2.49761 4.83699H4.92031C5.22337 4.83707 5.49206 4.64212 5.58601 4.35399L6.33501 2.04959L6.33431 2.04889Z\" fill=\"#FBBF24\"/>\n</svg>",
   starEmpty: "<svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M6.44573 1.74379C6.62073 1.20654 7.38082 1.20654 7.55523 1.74379L8.44132 4.47029C8.51954 4.71019 8.74315 4.8726 8.99548 4.87279H11.8626C12.4278 4.87279 12.6623 5.59612 12.2056 5.92862L9.88623 7.61329C9.68185 7.76187 9.59637 8.02515 9.67448 8.26545L10.56 10.992C10.735 11.5298 10.1196 11.9766 9.66282 11.6441L7.34348 9.95945C7.13898 9.81079 6.86199 9.81079 6.65748 9.95945L4.33815 11.6441C3.8814 11.9766 3.26598 11.5292 3.44098 10.992L4.32648 8.26545C4.4046 8.02515 4.31912 7.76187 4.11473 7.61329L1.7954 5.92862C1.33807 5.59612 1.57373 4.87279 2.1384 4.87279H5.0049C5.25745 4.87285 5.48136 4.7104 5.55965 4.47029L6.44573 1.74379V1.74379\" stroke=\"#AFAFAE\" stroke-width=\"1.16667\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n</svg>",
@@ -19,24 +19,17 @@ let activeSessionId = null;
 let currentFilterPlatform = "all";
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Establish connection port with background to auto-hide/show floating button on web pages
+  try {
+    chrome.runtime.connect({ name: "side_panel" });
+  } catch (e) {}
+
   await initSettingsAndTheme();
   await loadSessions();
 
   // Search input
   document.getElementById("searchInput")?.addEventListener("input", (e) => {
     renderSessionList(e.target.value);
-  });
-
-  // Filter Pills
-  const filterPills = document.querySelectorAll(".fig-filter-pill");
-  filterPills.forEach((pill) => {
-    pill.addEventListener("click", () => {
-      filterPills.forEach(p => p.classList.remove("active"));
-      pill.classList.add("active");
-      currentFilterPlatform = pill.getAttribute("data-filter") || "all";
-      const searchVal = document.getElementById("searchInput")?.value || "";
-      renderSessionList(searchVal);
-    });
   });
 
   // Main Header Actions
@@ -355,7 +348,72 @@ function getPlatformTagClass(site) {
   if (s.includes("claude")) return "claude";
   if (s.includes("z-ai") || s.includes("z.ai") || s.includes("chatglm")) return "z-ai";
   if (s.includes("deepseek")) return "deepseek";
-  return "generic";
+  return "other";
+}
+
+function renderDynamicFilterPills(sessionList) {
+  const strip = document.getElementById("filterPillsStrip");
+  if (!strip) return;
+
+  // When no sessions are captured, hide and clear the filter strip completely
+  if (!sessionList || sessionList.length === 0) {
+    strip.innerHTML = "";
+    strip.style.display = "none";
+    currentFilterPlatform = "all";
+    return;
+  }
+
+  // Count sessions per platform
+  const platformCounts = {};
+  for (const s of sessionList) {
+    const site = s.site || "Other";
+    platformCounts[site] = (platformCounts[site] || 0) + 1;
+  }
+
+  const platforms = Object.keys(platformCounts).sort();
+
+  // If current filter is no longer in platforms, reset to "all"
+  if (currentFilterPlatform !== "all" && !platformCounts[currentFilterPlatform]) {
+    currentFilterPlatform = "all";
+  }
+
+  strip.style.display = "flex";
+  strip.innerHTML = "";
+
+  // 1. "All" Pill
+  const allBtn = document.createElement("button");
+  allBtn.className = `fig-filter-pill ${currentFilterPlatform === "all" ? "active" : ""}`;
+  allBtn.setAttribute("data-filter", "all");
+  allBtn.textContent = `All (${sessionList.length})`;
+  allBtn.addEventListener("click", () => {
+    selectFilterPlatform("all");
+  });
+  strip.appendChild(allBtn);
+
+  // 2. Dynamic Platform Pills
+  for (const plat of platforms) {
+    const btn = document.createElement("button");
+    btn.className = `fig-filter-pill ${currentFilterPlatform === plat ? "active" : ""}`;
+    btn.setAttribute("data-filter", plat);
+    btn.textContent = `${plat} (${platformCounts[plat]})`;
+    btn.addEventListener("click", () => {
+      selectFilterPlatform(plat);
+    });
+    strip.appendChild(btn);
+  }
+}
+
+function selectFilterPlatform(platform) {
+  currentFilterPlatform = platform;
+  const strip = document.getElementById("filterPillsStrip");
+  if (strip) {
+    strip.querySelectorAll(".fig-filter-pill").forEach((pill) => {
+      const p = pill.getAttribute("data-filter");
+      pill.classList.toggle("active", p === platform);
+    });
+  }
+  const searchVal = document.getElementById("searchInput")?.value || "";
+  renderSessionList(searchVal);
 }
 
 function renderSessionList(filterText = "") {
@@ -365,11 +423,8 @@ function renderSessionList(filterText = "") {
   const query = filterText.toLowerCase().trim();
   const sessionList = Object.values(allSessions).sort((a, b) => (b.updated || 0) - (a.updated || 0));
 
-  // Update All count on pill
-  const allPill = document.querySelector(".fig-filter-pill[data-filter='all']");
-  if (allPill) {
-    allPill.textContent = `All (${sessionList.length})`;
-  }
+  // Render or update dynamic filter pills
+  renderDynamicFilterPills(sessionList);
 
   const filtered = sessionList.filter((s) => {
     // 1. Platform pill filtering

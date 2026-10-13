@@ -1,9 +1,32 @@
-﻿// Service Worker for PromptPort
+// Service Worker for PromptPort
 
 // Open side panel when the toolbar icon is clicked
 chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error("Error setting panel behavior:", error));
+
+// Track open side panel port for robust auto-hide/show of on-page floating button
+chrome.runtime.onConnect.addListener((port) => {
+  if (port.name === "side_panel") {
+    // Notify all tabs that side panel opened
+    broadcastToAllTabs({ type: "SIDE_PANEL_STATE", open: true });
+
+    port.onDisconnect.addListener(() => {
+      // Notify all tabs that side panel closed
+      broadcastToAllTabs({ type: "SIDE_PANEL_STATE", open: false });
+    });
+  }
+});
+
+function broadcastToAllTabs(msg) {
+  chrome.tabs.query({}).then((tabs) => {
+    for (const t of tabs) {
+      if (t.id) {
+        chrome.tabs.sendMessage(t.id, msg).catch(() => {});
+      }
+    }
+  }).catch(() => {});
+}
 
 // Listen for messages from content script or side panel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -26,6 +49,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (tabId && chrome.sidePanel && chrome.sidePanel.open) {
       chrome.sidePanel.open({ tabId }).catch((err) => console.log("sidePanel.open error:", err));
     }
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === "SIDE_PANEL_STATE") {
+    broadcastToAllTabs(message);
     sendResponse({ success: true });
     return true;
   }

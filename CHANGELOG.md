@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2026-10-13
+
+### Added
+- **Dynamic Platform Filter Pills**: Replaced static platform filter pills with a reactive filter strip that dynamically generates buttons based on captured chat sessions (`ChatGPT (n)`, `Gemini (n)`, etc.).
+- **Auto-Hiding Filter Strip**: Automatically hides the filter pill strip when no chat sessions are captured, keeping the UI completely clean.
+- **Port-Based Side Panel State Tracking**: Added long-lived Chrome runtime port connection between Side Panel and Background worker to track open/closed state in real time.
+
+### Changed
+- **Explicit Capture Only**: Removed automatic background syncing and auto-scheduled sync on DOM mutations, making context capture completely explicit, fast, and user-controlled.
+- **Fallback Platform Tagging**: Unknown or non-predefined AI platforms now cleanly map to an "other" category tag.
+
+---
+
 ## [1.0.0] - 2026-10-12
 
 ### Added

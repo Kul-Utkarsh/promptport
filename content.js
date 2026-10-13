@@ -1,4 +1,4 @@
-﻿// Content Script for PromptPort
+// Content Script for PromptPort
 // Detects AI chat website, extracts conversations, and supports context injection
 
 (function () {
@@ -512,25 +512,7 @@
     return { count: messages.length, site: currentSite, title: chatTitle };
   }
 
-  function scheduleSync() {
-    if (debounceTimeout) clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(syncMessages, 1500);
-  }
-
-  // Observer to track dynamic additions in conversation
-  const observer = new MutationObserver(() => {
-    scheduleSync();
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
-  // Initial sync attempt
-  setTimeout(syncMessages, 2500);
-
-  // Listen for paste request from side panel
+  // Listen for paste, capture request, and side panel state from side panel / background
   chrome.runtime.onMessage.addListener((req, sender, sendResponse) => {
     if (req.type === "PASTE_INTO_INPUT") {
       const success = injectTextIntoChatInput(req.text);
@@ -543,6 +525,24 @@
       }).catch((err) => {
         sendResponse({ success: false, error: err.message });
       });
+      return true;
+    }
+    if (req.type === "SIDE_PANEL_STATE") {
+      const widget = document.getElementById("ai-bridge-tray-widget");
+      if (widget) {
+        if (req.open) {
+          widget.style.display = "none";
+        } else {
+          chrome.storage.local.get("showFloatingBtn").then((data) => {
+            if (data.showFloatingBtn !== false) {
+              widget.style.display = "";
+            }
+          }).catch(() => {
+            widget.style.display = "";
+          });
+        }
+      }
+      sendResponse({ success: true });
       return true;
     }
   });
@@ -687,8 +687,8 @@
           left: auto;
         }
         .ai-bridge-circle-btn {
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           border-radius: 12px;
           background: #373634;
           color: #ffffff;
@@ -697,98 +697,123 @@
           justify-content: center;
           font-size: 16px;
           cursor: pointer;
-          box-shadow: 0 4px 12px rgba(55, 54, 52, 0.35);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
           border: 1.5px solid rgba(220, 235, 125, 0.4);
           position: relative;
         }
         .ai-bridge-circle-btn:hover {
           background: #232220;
-          transform: scale(1.08);
+          transform: translateY(-2px) scale(1.05);
           border-color: #DCEB7D;
-          box-shadow: 0 6px 16px rgba(55, 54, 52, 0.45);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
         }
         .ai-bridge-circle-btn.recapture {
           background: #373634;
           border-color: #DCEB7D;
-          box-shadow: 0 4px 12px rgba(220, 235, 125, 0.35);
+          box-shadow: 0 4px 16px rgba(220, 235, 125, 0.25);
         }
         .ai-bridge-circle-btn.recapture:hover {
           background: #232220;
         }
         .ai-bridge-badge-count {
           position: absolute;
-          top: -4px;
-          right: -6px;
+          top: -5px;
+          right: -7px;
           background: #ef4444;
           color: #ffffff;
           font-size: 10px;
           font-weight: 700;
-          padding: 1px 5px;
+          padding: 1px 6px;
           border-radius: 10px;
-          border: 1.5px solid #ffffff;
+          border: 1.5px solid #232220;
           display: none;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         .ai-bridge-badge-count.show {
           display: inline-block;
         }
         .ai-bridge-popup {
           position: absolute;
-          bottom: calc(100% + 8px);
+          bottom: calc(100% + 10px);
           right: 0;
-          width: 240px;
-          background: #ffffff;
-          color: #1f2937;
-          border-radius: 12px;
-          padding: 10px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-          border: 1px solid #e5e7eb;
+          width: 250px;
+          background: #232220;
+          color: #FFFFFF;
+          border-radius: 14px;
+          padding: 12px;
+          box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(220, 235, 125, 0.15);
           display: none;
           flex-direction: column;
-          gap: 6px;
+          gap: 8px;
+          backdrop-filter: blur(16px);
         }
         .ai-bridge-popup.open {
           display: flex;
+          animation: ppFadeInUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes ppFadeInUp {
+          from { opacity: 0; transform: translateY(6px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .ai-bridge-popup-header {
-          font-size: 11px;
-          font-weight: 700;
-          color: #4b5563;
-          border-bottom: 1px solid #f3f4f6;
-          padding-bottom: 5px;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .ai-bridge-popup-brand {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: -0.2px;
+          color: #FFFFFF;
+        }
+        .ai-bridge-popup-brand svg {
+          flex-shrink: 0;
         }
         .ai-bridge-popup-header span.badge {
-          background: #eff6ff;
-          color: #2563eb;
-          padding: 2px 6px;
-          border-radius: 4px;
+          background: rgba(220, 235, 125, 0.15);
+          color: #DCEB7D;
+          border: 1px solid rgba(220, 235, 125, 0.3);
+          padding: 2px 8px;
+          border-radius: 9999px;
           font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
         }
         .ai-bridge-action-item {
           display: flex;
           align-items: center;
-          gap: 8px;
-          padding: 7px 10px;
-          border-radius: 8px;
+          gap: 10px;
+          padding: 9px 12px;
+          border-radius: 10px;
           font-size: 12px;
           cursor: pointer;
-          background: #f9fafb;
-          border: 1px solid #f3f4f6;
-          font-weight: 500;
+          background: #373634;
+          border: 1px solid rgba(255, 255, 255, 0.06);
+          color: #FFFFFF;
+          font-weight: 600;
           transition: all 0.15s ease;
         }
         .ai-bridge-action-item:hover {
-          background: #eff6ff;
-          border-color: #bfdbfe;
-          color: #1d4ed8;
+          background: #454441;
+          border-color: rgba(220, 235, 125, 0.35);
+          color: #DCEB7D;
+          transform: translateX(2px);
+        }
+        .ai-bridge-action-item svg {
+          flex-shrink: 0;
         }
         .ai-bridge-action-item.success {
-          background: #ecfdf5;
-          color: #059669;
-          border-color: #a7f3d0;
+          background: rgba(16, 185, 129, 0.15);
+          color: #34d399;
+          border-color: rgba(16, 185, 129, 0.4);
         }
       </style>
       <div id="ai-bridge-main-btn" class="ai-bridge-circle-btn" title="PromptPort (Click for Quick Actions)">
@@ -801,15 +826,26 @@
       </div>
       <div id="ai-bridge-popup-menu" class="ai-bridge-popup">
         <div class="ai-bridge-popup-header">
-          <span>PromptPort</span>
+          <div class="ai-bridge-popup-brand">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9.21866 6.78133C8.17733 5.74032 6.48933 5.74032 5.448 6.78133L2.78133 9.448C2.08811 10.1175 1.8101 11.109 2.05414 12.0414C2.29818 12.9737 3.0263 13.7018 3.95864 13.9459C4.89099 14.1899 5.88247 13.9119 6.552 13.2187L7.28666 12.4847M6.78133 9.21867C7.82266 10.2597 9.51067 10.2597 10.552 9.21867L13.2187 6.552C14.2293 5.50566 14.2148 3.84244 13.1862 2.81382C12.1576 1.78519 10.4943 1.77074 9.448 2.78133L8.71466 3.51467" stroke="#DCEB7D" stroke-width="1.46667" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>PromptPort</span>
+          </div>
           <span class="badge" id="ai-bridge-site-badge">${escapeHtml(currentSite)}</span>
         </div>
         <div id="ai-bridge-action-capture" class="ai-bridge-action-item">
-          <span id="ai-bridge-capture-icon">📸</span>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3.3333L8 1.3333L10 3.33331M8 1.3333L8 9.33331" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.99996 5.99997H2.66663V11.3333C2.66663 12.4379 3.56206 13.3333 4.66663 13.3333H11.3333C12.4379 13.3333 13.3333 12.4379 13.3333 11.3333V5.99997H12" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span id="ai-bridge-capture-text">Capture Conversation</span>
         </div>
         <div id="ai-bridge-action-panel" class="ai-bridge-action-item">
-          <span>📂</span>
+          <svg width="15" height="15" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7.5 12.75L11.25 9L7.5 5.25" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.25 3.75H15.75V14.25H2.25V3.75Z" stroke="#878685" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span>Open PromptPort Side Panel</span>
         </div>
       </div>

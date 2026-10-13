@@ -148,7 +148,7 @@ flowchart TD
 ### Method 1: Ready-to-Use ZIP Package (Easiest & Fastest — No Git Needed!)
 You do **not** need to download the whole repository or install any developer tools:
 1. Go to the [Releases](https://github.com/Kul-Utkarsh/promptport/releases) page.
-2. Under **Assets**, download **`promptport-v1.0.0.zip`** (lightweight ~56 KB package containing strictly the files needed to run the extension).
+2. Under **Assets**, download **`promptport-v1.1.0.zip`** (lightweight ~56 KB package containing strictly the files needed to run the extension).
 3. Unzip the downloaded file to a folder on your computer.
 4. Open Google Chrome (or Edge/Brave/Arc) and go to `chrome://extensions/`.
 5. Toggle on **Developer mode** in the top-right corner.
