@@ -5,13 +5,17 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error("Error setting panel behavior:", error));
 
+let isSidePanelOpen = false;
+
 // Track open side panel port for robust auto-hide/show of on-page floating button
 chrome.runtime.onConnect.addListener((port) => {
   if (port.name === "side_panel") {
+    isSidePanelOpen = true;
     // Notify all tabs that side panel opened
     broadcastToAllTabs({ type: "SIDE_PANEL_STATE", open: true });
 
     port.onDisconnect.addListener(() => {
+      isSidePanelOpen = false;
       // Notify all tabs that side panel closed
       broadcastToAllTabs({ type: "SIDE_PANEL_STATE", open: false });
     });
@@ -45,15 +49,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.type === "OPEN_SIDE_PANEL") {
+    const windowId = sender.tab?.windowId;
     const tabId = sender.tab?.id;
-    if (tabId && chrome.sidePanel && chrome.sidePanel.open) {
-      chrome.sidePanel.open({ tabId }).catch((err) => console.log("sidePanel.open error:", err));
+    if (chrome.sidePanel && chrome.sidePanel.open) {
+      if (windowId) {
+        chrome.sidePanel.open({ windowId }).catch((err) => {
+          console.warn("[PromptPort] sidePanel.open({ windowId }) failed, trying tabId:", err);
+          if (tabId) {
+            chrome.sidePanel.open({ tabId }).catch((err2) => {
+              console.error("[PromptPort] sidePanel.open({ tabId }) failed:", err2);
+            });
+          }
+        });
+      } else if (tabId) {
+        chrome.sidePanel.open({ tabId }).catch((err) => {
+          console.error("[PromptPort] sidePanel.open({ tabId }) failed:", err);
+        });
+      }
     }
     sendResponse({ success: true });
     return true;
   }
 
+  if (message.type === "GET_SIDE_PANEL_STATE") {
+    sendResponse({ open: isSidePanelOpen });
+    return true;
+  }
+
   if (message.type === "SIDE_PANEL_STATE") {
+    isSidePanelOpen = message.open === true;
     broadcastToAllTabs(message);
     sendResponse({ success: true });
     return true;

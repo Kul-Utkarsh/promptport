@@ -12,9 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Dynamic Platform Filter Pills**: Replaced static platform filter pills with a reactive filter strip that dynamically generates buttons based on captured chat sessions (`ChatGPT (n)`, `Gemini (n)`, etc.).
 - **Auto-Hiding Filter Strip**: Automatically hides the filter pill strip when no chat sessions are captured, keeping the UI completely clean.
-- **Port-Based Side Panel State Tracking**: Added long-lived Chrome runtime port connection between Side Panel and Background worker to track open/closed state in real time.
+- **Port-Based Side Panel State Tracking**: Added long-lived Chrome runtime port connection between Side Panel and Background worker to track open/closed state in real time (`beforeunload` and `pagehide` listeners).
+- **Extension Invalidation Guards**: Added `isExtensionValid()` and safe messaging wrappers to content scripts to prevent "Extension context invalidated" console errors upon extension reload.
 
 ### Changed
+- **Default Theme to System**: Initial startup theme now automatically synchronizes with the user's operating system dark/light theme preference by default.
 - **Explicit Capture Only**: Removed automatic background syncing and auto-scheduled sync on DOM mutations, making context capture completely explicit, fast, and user-controlled.
 - **Fallback Platform Tagging**: Unknown or non-predefined AI platforms now cleanly map to an "other" category tag.
 

@@ -17,12 +17,26 @@ const FIGMA_ICONS = {
 let allSessions = {};
 let activeSessionId = null;
 let currentFilterPlatform = "all";
+let sidePanelPort = null;
+
+function notifySidePanelClosed() {
+  if (sidePanelPort) {
+    try { sidePanelPort.disconnect(); } catch (e) {}
+    sidePanelPort = null;
+  }
+  try {
+    chrome.runtime.sendMessage({ type: "SIDE_PANEL_STATE", open: false }).catch(() => {});
+  } catch (e) {}
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   // Establish connection port with background to auto-hide/show floating button on web pages
   try {
-    chrome.runtime.connect({ name: "side_panel" });
+    sidePanelPort = chrome.runtime.connect({ name: "side_panel" });
   } catch (e) {}
+
+  window.addEventListener("pagehide", notifySidePanelClosed);
+  window.addEventListener("beforeunload", notifySidePanelClosed);
 
   await initSettingsAndTheme();
   await loadSessions();
@@ -39,7 +53,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     await refreshLivePlatform();
     showToast("🔄 Tool refreshed");
   });
-  document.getElementById("btnClosePanel")?.addEventListener("click", () => window.close());
+  document.getElementById("btnClosePanel")?.addEventListener("click", () => {
+    notifySidePanelClosed();
+    window.close();
+  });
   document.getElementById("btnSettings")?.addEventListener("click", () => showScreen("settingsView"));
 
   // Detail / Preview Screen Actions
@@ -51,7 +68,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       showToast("Context refreshed");
     }
   });
-  document.getElementById("btnDetailClose")?.addEventListener("click", () => window.close());
+  document.getElementById("btnDetailClose")?.addEventListener("click", () => {
+    notifySidePanelClosed();
+    window.close();
+  });
 
   // Export Chat Dropdown in Detail Screen
   const exportBtn = document.getElementById("btnExportChatMenu");
@@ -1326,7 +1346,7 @@ function updateCustomFormatDropdown(value) {
 
 async function initSettingsAndTheme() {
   const {
-    appTheme = "light",
+    appTheme = "system",
     defaultExportFormat = "condensed",
     showFloatingBtn = true,
     fabPosition = "bottom-right",
@@ -1377,7 +1397,7 @@ function updateRadioCards(selectedTheme) {
   document.getElementById("themeLabelDark")?.classList.toggle("selected", selectedTheme === "dark");
 }
 
-let currentAppTheme = "light";
+let currentAppTheme = "system";
 
 function applyTheme(theme, save = true) {
   currentAppTheme = theme;

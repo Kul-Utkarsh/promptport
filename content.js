@@ -17,11 +17,39 @@
     return "GenericAI";
   }
 
+  // Check if extension context is still valid (not orphaned by extension reload)
+  function isExtensionValid() {
+    try {
+      return Boolean(typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Safe wrapper for chrome.runtime.sendMessage that catches context invalidation
+  function safeSendMessage(msg, callback) {
+    if (!isExtensionValid()) return;
+    try {
+      chrome.runtime.sendMessage(msg, (response) => {
+        if (chrome.runtime.lastError) {
+          // Suppress error if context was closed
+        }
+        if (callback) callback(response);
+      });
+    } catch (e) {
+      // Quietly ignore context invalidation
+    }
+  }
+
   // Broadcast current platform to side panel
   function broadcastPlatform() {
-    const site = detectSite();
-    chrome.runtime.sendMessage({ type: "PLATFORM_UPDATE", payload: { site } });
+    if (!isExtensionValid()) return;
+    try {
+      const site = detectSite();
+      safeSendMessage({ type: "PLATFORM_UPDATE", payload: { site } });
+    } catch (e) {}
   }
+
   // Listen for navigation changes (SPA)
   window.addEventListener('popstate', broadcastPlatform);
   window.addEventListener('visibilitychange', () => {
@@ -36,12 +64,16 @@
     };
   });
   // Respond to explicit GET_PLATFORM requests
-  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-    if (msg.type === "GET_PLATFORM") {
-      sendResponse({ site: detectSite() });
-      return true;
-    }
-  });
+  if (isExtensionValid()) {
+    try {
+      chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+        if (msg.type === "GET_PLATFORM") {
+          sendResponse({ site: detectSite() });
+          return true;
+        }
+      });
+    } catch (e) {}
+  }
   const currentSite = detectSite();
 
   // Helper to extract uploaded files, images, documents, and code artifacts from message containers
@@ -458,9 +490,32 @@
   let lastMessageCount = 0;
   let debounceTimeout = null;
 
+  let isSidePanelOpen = false;
+
+  // Query initial side panel open state from background service worker
+  try {
+    chrome.runtime.sendMessage({ type: "GET_SIDE_PANEL_STATE" }, (resp) => {
+      if (chrome.runtime.lastError) return;
+      if (resp && resp.open) {
+        isSidePanelOpen = true;
+        const w = document.getElementById("ai-bridge-tray-widget");
+        if (w) w.style.display = "none";
+      }
+    });
+  } catch (e) {}
+
   async function syncMessages() {
-    const messages = extractAllMessages();
-    if (messages.length === 0) return { count: 0, site: currentSite };
+    let messages = [];
+    try {
+      messages = extractAllMessages() || [];
+    } catch (err) {
+      console.warn("[PromptPort] extractAllMessages encountered error:", err);
+      messages = [];
+    }
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return { count: 0, site: currentSite };
+    }
 
     lastMessageCount = messages.length;
     console.log(`[PromptPort] Captured ${messages.length} messages from ${currentSite}`);
@@ -475,7 +530,14 @@
 
     // Save directly into chrome.storage.local for instantaneous availability
     try {
-      const { chatSessions = {} } = await chrome.storage.local.get("chatSessions");
+      let chatSessions = {};
+      try {
+        const stored = await chrome.storage.local.get("chatSessions");
+        chatSessions = stored?.chatSessions || {};
+      } catch (e) {
+        chatSessions = {};
+      }
+
       const sessionId = `${currentSite}__${encodeURIComponent(location.href.split("?")[0])}`;
       const existing = chatSessions[sessionId] || {
         id: sessionId,
@@ -496,17 +558,21 @@
       await chrome.storage.local.set({ chatSessions });
 
       // Notify any listening components
-      chrome.runtime.sendMessage({
-        type: "SESSION_UPDATED",
-        sessionId,
-        session: updatedSession
-      }).catch(() => {});
+      try {
+        chrome.runtime.sendMessage({
+          type: "SESSION_UPDATED",
+          sessionId,
+          session: updatedSession
+        }).catch(() => {});
+      } catch (e) {}
     } catch (storageErr) {
       console.warn("[PromptPort] Direct storage save error, sending to background:", storageErr);
-      chrome.runtime.sendMessage({
-        type: "CHAT_CAPTURED",
-        payload: payload
-      }).catch(() => {});
+      try {
+        chrome.runtime.sendMessage({
+          type: "CHAT_CAPTURED",
+          payload: payload
+        }).catch(() => {});
+      } catch (e) {}
     }
 
     return { count: messages.length, site: currentSite, title: chatTitle };
@@ -528,10 +594,13 @@
       return true;
     }
     if (req.type === "SIDE_PANEL_STATE") {
+      isSidePanelOpen = req.open === true;
       const widget = document.getElementById("ai-bridge-tray-widget");
       if (widget) {
-        if (req.open) {
+        if (isSidePanelOpen) {
           widget.style.display = "none";
+          const popup = widget.querySelector("#ai-bridge-popup-menu");
+          if (popup) popup.classList.remove("open");
         } else {
           chrome.storage.local.get("showFloatingBtn").then((data) => {
             if (data.showFloatingBtn !== false) {
@@ -643,7 +712,13 @@
   }
 
   async function injectTrayWidget() {
-    if (document.getElementById("ai-bridge-tray-widget")) return;
+    const existing = document.getElementById("ai-bridge-tray-widget");
+    if (existing) {
+      if (isSidePanelOpen && existing.style.display !== "none") {
+        existing.style.display = "none";
+      }
+      return;
+    }
 
     let showFloatingBtn = true;
     let fabPosition = "right";
@@ -661,6 +736,9 @@
     widget.id = "ai-bridge-tray-widget";
     const isLeft = fabPosition === "left" || fabPosition === "bottom-left";
     widget.className = isLeft ? "pos-left" : "pos-right";
+    if (isSidePanelOpen) {
+      widget.style.display = "none";
+    }
     widget.innerHTML = `
       <style>
         #ai-bridge-tray-widget {
@@ -873,53 +951,78 @@
     });
 
     // Action: Capture / Re-Capture
-    captureItem.addEventListener("click", async () => {
+    captureItem.addEventListener("click", async (e) => {
+      e.stopPropagation();
       const captureText = widget.querySelector("#ai-bridge-capture-text");
-      captureText.textContent = "Capturing...";
+      if (!isExtensionValid()) {
+        if (captureText) captureText.textContent = "🔄 Please refresh tab";
+        setTimeout(() => {
+          if (captureText) captureText.textContent = "Capture Conversation";
+        }, 2500);
+        return;
+      }
+      if (captureText) captureText.textContent = "Capturing...";
       
-      const res = await syncMessages();
-      const count = res ? res.count : 0;
-      capturedMessageCount = count;
+      try {
+        const res = await syncMessages();
+        const count = res ? res.count : 0;
+        capturedMessageCount = count;
 
-      if (count > 0) {
-        captureText.textContent = `✅ Saved ${count} msgs!`;
-        captureItem.classList.add("success");
-        updateButtonToRecaptureState(count);
+        if (count > 0) {
+          if (captureText) captureText.textContent = `✅ Saved ${count} msgs!`;
+          captureItem.classList.add("success");
+          updateButtonToRecaptureState(count);
 
+          setTimeout(() => {
+            if (captureText) captureText.textContent = `🔄 Re-capture (${count} saved)`;
+            captureItem.classList.remove("success");
+            popup.classList.remove("open");
+          }, 1500);
+        } else {
+          if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
+          setTimeout(() => {
+            if (captureText) captureText.textContent = "Capture Conversation";
+          }, 2000);
+        }
+      } catch (err) {
+        console.error("[PromptPort] Capture Conversation error:", err);
+        if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
         setTimeout(() => {
-          captureText.textContent = `🔄 Re-capture (${count} saved)`;
-          captureItem.classList.remove("success");
-          popup.classList.remove("open");
-        }, 1500);
-      } else {
-        captureText.textContent = "⚠️ Found 0 msgs";
-        setTimeout(() => {
-          captureText.textContent = "Capture Conversation";
+          if (captureText) captureText.textContent = "Capture Conversation";
         }, 2000);
       }
     });
 
     // Action: Open Side Panel
-    panelItem.addEventListener("click", () => {
-      chrome.runtime.sendMessage({ type: "OPEN_SIDE_PANEL" });
+    panelItem.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!isExtensionValid()) {
+        alert("PromptPort was updated. Please refresh this tab to reconnect.");
+        return;
+      }
+      safeSendMessage({ type: "OPEN_SIDE_PANEL" });
       popup.classList.remove("open");
     });
 
     // Listen for live position & visibility changes
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area === "local") {
-        const el = document.getElementById("ai-bridge-tray-widget");
-        if (changes.fabPosition && el) {
-          const pos = changes.fabPosition.newValue || "right";
-          const isLeft = pos === "left" || pos === "bottom-left";
-          el.classList.toggle("pos-left", isLeft);
-          el.classList.toggle("pos-right", !isLeft);
-        }
-        if (changes.showFloatingBtn && el) {
-          el.style.display = changes.showFloatingBtn.newValue === false ? "none" : "";
-        }
-      }
-    });
+    if (isExtensionValid()) {
+      try {
+        chrome.storage.onChanged.addListener((changes, area) => {
+          if (area === "local") {
+            const el = document.getElementById("ai-bridge-tray-widget");
+            if (changes.fabPosition && el) {
+              const pos = changes.fabPosition.newValue || "right";
+              const isLeft = pos === "left" || pos === "bottom-left";
+              el.classList.toggle("pos-left", isLeft);
+              el.classList.toggle("pos-right", !isLeft);
+            }
+            if (changes.showFloatingBtn && el) {
+              el.style.display = changes.showFloatingBtn.newValue === false ? "none" : "";
+            }
+          }
+        });
+      } catch (e) {}
+    }
   }
 
   function updateButtonToRecaptureState(count) {
@@ -953,8 +1056,12 @@
     }
   }
 
-  // Periodic injection & update check
-  setInterval(() => {
+  // Periodic injection & update check with invalidation guard
+  const periodicCheck = setInterval(() => {
+    if (!isExtensionValid()) {
+      clearInterval(periodicCheck);
+      return;
+    }
     injectTrayWidget();
     checkForNewMessages();
   }, 1800);

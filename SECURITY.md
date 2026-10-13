@@ -1,4 +1,4 @@
-﻿# Security Policy
+# Security Policy
 
 The **PromptPort** team takes the security and privacy of our users very seriously. As a tool designed to capture, format, and transfer conversation history between artificial intelligence platforms, privacy and data confidentiality are fundamental architectural tenets.
 
@@ -10,6 +10,7 @@ Only the latest released version receives active security patches.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 1.1.x   | :white_check_mark: |
 | 1.0.x   | :white_check_mark: |
 | < 1.0.0 | :x:                |
 
