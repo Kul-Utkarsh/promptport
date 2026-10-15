@@ -84,6 +84,82 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+function getMessageKey(msg) {
+  const role = msg.role || "user";
+  const text = (msg.text || "").replace(/\s+/g, " ").trim();
+  const attach = (msg.attachments || []).map(a => a.name || a.url || "").join(",");
+  return `${role}:::${text}:::${attach}`;
+}
+
+function mergeMessageLists(listA, listB) {
+  if (!listA || listA.length === 0) return listB ? [...listB] : [];
+  if (!listB || listB.length === 0) return listA ? [...listA] : [];
+
+  const keysA = listA.map(getMessageKey);
+  const keysB = listB.map(getMessageKey);
+
+  if (keysA.length === keysB.length && keysA.every((k, i) => k === keysB[i])) {
+    return listA;
+  }
+
+  const strA = keysA.join("|||");
+  const strB = keysB.join("|||");
+  if (strA.includes(strB)) return listA;
+  if (strB.includes(strA)) return listB;
+
+  const maxEndOverlap = Math.min(keysA.length, keysB.length);
+  for (let k = maxEndOverlap; k >= 1; k--) {
+    let match = true;
+    for (let i = 0; i < k; i++) {
+      if (keysA[keysA.length - k + i] !== keysB[i]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      return [...listA, ...listB.slice(k)];
+    }
+  }
+
+  const maxStartOverlap = Math.min(keysA.length, keysB.length);
+  for (let k = maxStartOverlap; k >= 1; k--) {
+    let match = true;
+    for (let i = 0; i < k; i++) {
+      if (keysB[keysB.length - k + i] !== keysA[i]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) {
+      return [...listB.slice(0, listB.length - k), ...listA];
+    }
+  }
+
+  let bestOverlapA = -1;
+  let bestOverlapB = -1;
+  for (let i = 0; i < keysA.length; i++) {
+    const idxInB = keysB.indexOf(keysA[i]);
+    if (idxInB !== -1) {
+      bestOverlapA = i;
+      bestOverlapB = idxInB;
+      break;
+    }
+  }
+
+  if (bestOverlapA !== -1) {
+    const prefixA = listA.slice(0, bestOverlapA);
+    const prefixB = listB.slice(0, bestOverlapB);
+    const combinedPrefix = prefixB.length >= prefixA.length ? prefixB : prefixA;
+
+    const suffixA = listA.slice(bestOverlapA);
+    const suffixB = listB.slice(bestOverlapB);
+    const mergedSuffix = mergeMessageLists(suffixA, suffixB);
+    return [...combinedPrefix, ...mergedSuffix];
+  }
+
+  return [...listA, ...listB];
+}
+
 // Save or update chat session in chrome.storage.local
 async function handleChatCaptured(payload, tab) {
   const { site, url, title, messages } = payload;
@@ -100,16 +176,19 @@ async function handleChatCaptured(payload, tab) {
     id: sessionId,
     created: Date.now(),
     isFavorite: false,
-    customTitle: null
+    customTitle: null,
+    messages: []
   };
+
+  const mergedMessages = mergeMessageLists(existing.messages || [], messages || []);
 
   const updatedSession = {
     ...existing,
     site,
     url,
     title: existing.customTitle || title || `${site} Chat`,
-    messages,
-    messageCount: messages.length,
+    messages: mergedMessages,
+    messageCount: mergedMessages.length,
     updated: Date.now()
   };
 
@@ -125,7 +204,7 @@ async function handleChatCaptured(payload, tab) {
     // Ignore error if side panel is closed
   });
 
-  return { sessionId, messageCount: messages.length };
+  return { sessionId, messageCount: mergedMessages.length };
 }
 
 // Injects imported text into active AI chat input

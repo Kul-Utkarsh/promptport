@@ -504,31 +504,237 @@
     });
   } catch (e) {}
 
-  async function syncMessages() {
+  function getMessageKey(msg) {
+    const role = msg.role || "user";
+    const text = (msg.text || "").replace(/\s+/g, " ").trim();
+    const attach = (msg.attachments || []).map(a => a.name || a.url || "").join(",");
+    return `${role}:::${text}:::${attach}`;
+  }
+
+  function mergeMessageLists(listA, listB) {
+    if (!listA || listA.length === 0) return listB ? [...listB] : [];
+    if (!listB || listB.length === 0) return listA ? [...listA] : [];
+
+    const keysA = listA.map(getMessageKey);
+    const keysB = listB.map(getMessageKey);
+
+    // Exact match
+    if (keysA.length === keysB.length && keysA.every((k, i) => k === keysB[i])) {
+      return listA;
+    }
+
+    // Check if B is subsegment of A
+    const strA = keysA.join("|||");
+    const strB = keysB.join("|||");
+    if (strA.includes(strB)) return listA;
+    if (strB.includes(strA)) return listB;
+
+    // Case 1: B extends A at the end (new messages added at bottom)
+    const maxEndOverlap = Math.min(keysA.length, keysB.length);
+    for (let k = maxEndOverlap; k >= 1; k--) {
+      let match = true;
+      for (let i = 0; i < k; i++) {
+        if (keysA[keysA.length - k + i] !== keysB[i]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return [...listA, ...listB.slice(k)];
+      }
+    }
+
+    // Case 2: B extends A at the beginning (older messages loaded at top)
+    const maxStartOverlap = Math.min(keysA.length, keysB.length);
+    for (let k = maxStartOverlap; k >= 1; k--) {
+      let match = true;
+      for (let i = 0; i < k; i++) {
+        if (keysB[keysB.length - k + i] !== keysA[i]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) {
+        return [...listB.slice(0, listB.length - k), ...listA];
+      }
+    }
+
+    // Case 3: Fuzzy overlap / middle alignment
+    let bestOverlapA = -1;
+    let bestOverlapB = -1;
+    for (let i = 0; i < keysA.length; i++) {
+      const idxInB = keysB.indexOf(keysA[i]);
+      if (idxInB !== -1) {
+        bestOverlapA = i;
+        bestOverlapB = idxInB;
+        break;
+      }
+    }
+
+    if (bestOverlapA !== -1) {
+      const prefixA = listA.slice(0, bestOverlapA);
+      const prefixB = listB.slice(0, bestOverlapB);
+      const combinedPrefix = prefixB.length >= prefixA.length ? prefixB : prefixA;
+
+      const suffixA = listA.slice(bestOverlapA);
+      const suffixB = listB.slice(bestOverlapB);
+      const mergedSuffix = mergeMessageLists(suffixA, suffixB);
+      return [...combinedPrefix, ...mergedSuffix];
+    }
+
+    // Disjoint fallback: append
+    return [...listA, ...listB];
+  }
+
+  function findChatScrollContainer() {
+    if (typeof document === "undefined") return null;
+    const knownSelectors = [
+      // ChatGPT
+      "main div.overflow-y-auto",
+      "div[class*='react-scroll-to-bottom']",
+      "div[data-testid='conversation-turn-list']",
+      // Gemini
+      "infinite-scroller",
+      ".chat-history",
+      "div[class*='conversation-container']",
+      "div[class*='chat-window']",
+      // Claude
+      "div.overflow-y-auto",
+      // DeepSeek
+      "div[class*='chat-scroll']",
+      "div[class*='chat-messages']",
+      // Generic
+      "main"
+    ];
+
+    for (const sel of knownSelectors) {
+      const el = document.querySelector(sel);
+      if (el && el.scrollHeight > el.clientHeight + 50) {
+        return el;
+      }
+    }
+
+    // Dynamic scan: find ancestor of a message turn with scrollbar
+    const sampleTurn = document.querySelector(
+      "user-query, model-response, [data-message-author-role], [data-testid='user-message'], [data-message-id], .conversation-item"
+    );
+    if (sampleTurn) {
+      let parent = sampleTurn.parentElement;
+      while (parent && parent !== document.body && parent !== document.documentElement) {
+        try {
+          const style = window.getComputedStyle(parent);
+          if ((style.overflowY === "auto" || style.overflowY === "scroll") && parent.scrollHeight > parent.clientHeight + 50) {
+            return parent;
+          }
+        } catch (e) {}
+        parent = parent.parentElement;
+      }
+    }
+
+    if (document.scrollingElement && document.scrollingElement.scrollHeight > document.scrollingElement.clientHeight + 50) {
+      return document.scrollingElement;
+    }
+
+    return (typeof window !== "undefined") ? window : null;
+  }
+
+  async function fullChatCaptureSweep() {
+    const container = findChatScrollContainer();
+    if (!container) return extractAllMessages() || [];
+    const isWindow = (typeof window !== "undefined" && container === window);
+
+    const initialScrollTop = isWindow
+      ? (window.scrollY || (document.documentElement ? document.documentElement.scrollTop : 0) || 0)
+      : (container.scrollTop || 0);
+    const scrollHeight = isWindow
+      ? (document.documentElement ? document.documentElement.scrollHeight : 0)
+      : (container.scrollHeight || 0);
+    const clientHeight = isWindow
+      ? (window.innerHeight || 0)
+      : (container.clientHeight || 0);
+
+    let accumulatedMessages = extractAllMessages() || [];
+
+    // If container is not scrollable (short conversation), no scroll sweep needed!
+    if (scrollHeight <= clientHeight + 80) {
+      return accumulatedMessages;
+    }
+
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const scrollTo = (top) => {
+      try {
+        if (isWindow) {
+          window.scrollTo({ top, behavior: "instant" });
+        } else {
+          container.scrollTop = top;
+        }
+      } catch (e) {}
+    };
+
+    try {
+      // Step 1: Scroll to top to trigger loading and mounting of early messages
+      scrollTo(0);
+      await wait(180);
+      let topMsgs = extractAllMessages() || [];
+      accumulatedMessages = mergeMessageLists(accumulatedMessages, topMsgs);
+
+      // If new messages loaded at top causing scrollHeight to expand, scroll to top again
+      let currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
+      if (currentScrollHeight > scrollHeight + 100) {
+        scrollTo(0);
+        await wait(180);
+        topMsgs = extractAllMessages() || [];
+        accumulatedMessages = mergeMessageLists(accumulatedMessages, topMsgs);
+      }
+
+      // Step 2: Step down through the chat container in smooth leaps so all virtual DOM blocks mount
+      const stepSize = Math.max(350, Math.floor(clientHeight * 0.75));
+      currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
+      let curPos = 0;
+
+      while (curPos < currentScrollHeight) {
+        curPos += stepSize;
+        scrollTo(curPos);
+        await wait(60);
+        const stepMsgs = extractAllMessages() || [];
+        accumulatedMessages = mergeMessageLists(accumulatedMessages, stepMsgs);
+        currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
+      }
+
+      // Step 3: Scroll to very bottom to ensure latest message is mounted
+      scrollTo(currentScrollHeight);
+      await wait(100);
+      const bottomMsgs = extractAllMessages() || [];
+      accumulatedMessages = mergeMessageLists(accumulatedMessages, bottomMsgs);
+    } finally {
+      // Always restore user's original scroll position smoothly
+      scrollTo(initialScrollTop);
+    }
+
+    return accumulatedMessages;
+  }
+
+  async function syncMessages(options = {}) {
     let messages = [];
     try {
-      messages = extractAllMessages() || [];
+      // Always perform a full chat capture sweep unless explicitly requested as quickOnly
+      if (options.quickOnly) {
+        messages = extractAllMessages() || [];
+      } else {
+        messages = await fullChatCaptureSweep();
+      }
     } catch (err) {
-      console.warn("[PromptPort] extractAllMessages encountered error:", err);
-      messages = [];
+      console.warn("[PromptPort] fullChatCaptureSweep error, falling back:", err);
+      messages = extractAllMessages() || [];
     }
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return { count: 0, site: currentSite };
     }
 
-    lastMessageCount = messages.length;
-    console.log(`[PromptPort] Captured ${messages.length} messages from ${currentSite}`);
-
     const chatTitle = document.title || `${currentSite} Chat`;
-    const payload = {
-      site: currentSite,
-      url: location.href,
-      title: chatTitle,
-      messages: messages
-    };
 
-    // Save directly into chrome.storage.local for instantaneous availability
+    // Save directly into chrome.storage.local with smart merge
     try {
       let chatSessions = {};
       try {
@@ -543,15 +749,21 @@
         id: sessionId,
         created: Date.now(),
         isFavorite: false,
-        customTitle: null
+        customTitle: null,
+        messages: []
       };
+
+      const mergedMessages = mergeMessageLists(existing.messages || [], messages);
+      lastMessageCount = mergedMessages.length;
+      console.log(`[PromptPort] Captured full chat: ${mergedMessages.length} total messages from ${currentSite}`);
+
       const updatedSession = {
         ...existing,
         site: currentSite,
         url: location.href,
         title: existing.customTitle || chatTitle,
-        messages: messages,
-        messageCount: messages.length,
+        messages: mergedMessages,
+        messageCount: mergedMessages.length,
         updated: Date.now()
       };
       chatSessions[sessionId] = updatedSession;
@@ -565,17 +777,24 @@
           session: updatedSession
         }).catch(() => {});
       } catch (e) {}
+
+      return { count: mergedMessages.length, site: currentSite, title: chatTitle };
     } catch (storageErr) {
       console.warn("[PromptPort] Direct storage save error, sending to background:", storageErr);
       try {
         chrome.runtime.sendMessage({
           type: "CHAT_CAPTURED",
-          payload: payload
+          payload: {
+            site: currentSite,
+            url: location.href,
+            title: chatTitle,
+            messages: messages
+          }
         }).catch(() => {});
       } catch (e) {}
-    }
 
-    return { count: messages.length, site: currentSite, title: chatTitle };
+      return { count: messages.length, site: currentSite, title: chatTitle };
+    }
   }
 
   // Listen for paste, capture request, and side panel state from side panel / background
@@ -917,7 +1136,7 @@
             <path d="M6 3.3333L8 1.3333L10 3.33331M8 1.3333L8 9.33331" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M3.99996 5.99997H2.66663V11.3333C2.66663 12.4379 3.56206 13.3333 4.66663 13.3333H11.3333C12.4379 13.3333 13.3333 12.4379 13.3333 11.3333V5.99997H12" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span id="ai-bridge-capture-text">Capture Conversation</span>
+          <span id="ai-bridge-capture-text">Capture Full Chat</span>
         </div>
         <div id="ai-bridge-action-panel" class="ai-bridge-action-item">
           <svg width="15" height="15" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -957,11 +1176,11 @@
       if (!isExtensionValid()) {
         if (captureText) captureText.textContent = "🔄 Please refresh tab";
         setTimeout(() => {
-          if (captureText) captureText.textContent = "Capture Conversation";
+          if (captureText) captureText.textContent = "Capture Full Chat";
         }, 2500);
         return;
       }
-      if (captureText) captureText.textContent = "Capturing...";
+      if (captureText) captureText.textContent = "Capturing full chat...";
       
       try {
         const res = await syncMessages();
@@ -981,14 +1200,14 @@
         } else {
           if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
           setTimeout(() => {
-            if (captureText) captureText.textContent = "Capture Conversation";
+            if (captureText) captureText.textContent = "Capture Full Chat";
           }, 2000);
         }
       } catch (err) {
-        console.error("[PromptPort] Capture Conversation error:", err);
+        console.error("[PromptPort] Capture Full Chat error:", err);
         if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
         setTimeout(() => {
-          if (captureText) captureText.textContent = "Capture Conversation";
+          if (captureText) captureText.textContent = "Capture Full Chat";
         }, 2000);
       }
     });

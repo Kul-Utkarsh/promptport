@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2026-10-13
 
 ### Added
+- **Full Chat Capture Sweep**: Automated top-to-bottom scan through virtualized scroll containers (`scrollTop = 0` to bottom) forcing the webpage's virtual DOM to mount all earlier and latest conversation turns during capture.
+- **Smart Sequence Alignment & Merging**: Replaced destructive message overwriting with sequence-alignment deduplication (`mergeMessageLists`) ensuring that scrolling to the top or bottom never erases previously captured turns.
 - **Dynamic Platform Filter Pills**: Replaced static platform filter pills with a reactive filter strip that dynamically generates buttons based on captured chat sessions (`ChatGPT (n)`, `Gemini (n)`, etc.).
 - **Auto-Hiding Filter Strip**: Automatically hides the filter pill strip when no chat sessions are captured, keeping the UI completely clean.
 - **Port-Based Side Panel State Tracking**: Added long-lived Chrome runtime port connection between Side Panel and Background worker to track open/closed state in real time (`beforeunload` and `pagehide` listeners).
