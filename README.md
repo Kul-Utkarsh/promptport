@@ -22,6 +22,10 @@
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/PRs-Welcome-purple.svg" alt="PRs Welcome" /></a>
 </p>
 
+<p align="center">
+  <img src="assets/screenshots/hero-in-action.png" alt="PromptPort in Action with Google Gemini" width="100%" />
+</p>
+
 ---
 
 ## Table of Contents
@@ -86,6 +90,10 @@ Extracts uploaded files, documents (`.pdf`, `.py`, `.csv`, `.docx`, `.json`), do
 - Built to match Figma design tokens with pixel-perfect typography.
 - Full support for **Light**, **Dark**, and **System** themes.
 - Configurable floating button position (bottom-right vs. bottom-left).
+
+| Figma Dark Theme | Clean Light Theme |
+| :---: | :---: |
+| <img src="assets/screenshots/sidepanel-dark.png" alt="PromptPort Dark Theme" width="340" /> | <img src="assets/screenshots/sidepanel-light.png" alt="PromptPort Light Theme" width="340" /> |
 
 ### 💾 Multi-Format Export & Zero Cloud Dependency
 - Export any thread directly to **PDF**, **DOC/DOCX**, or **JSON**.
@@ -184,6 +192,11 @@ When navigating any supported AI platform (e.g. ChatGPT, Gemini):
 
 ### 3. Choosing Context Transfer Strategies
 Open any session card to access the **Detail & Preview Screen**:
+
+<p align="center">
+  <img src="assets/screenshots/preview-transfer.png" alt="PromptPort Context Preview & Transfer Strategy" width="380" />
+</p>
+
 - **Smart Summary**: Automatically compresses lengthy threads into *Primary Goal*, *Key Decisions*, and *Recent Turns*.
 - **Full Conversation**: Displays the complete turn history with formatted code blocks and individual code block copy buttons.
 - **Raw JSON**: Outputs structured data for programmatic usage.
