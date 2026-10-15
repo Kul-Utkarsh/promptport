@@ -140,6 +140,17 @@
     return attachments;
   }
 
+  // Helper to ensure we only scrape elements from the active conversation view,
+  // strictly excluding sidebar chat history drawers, navigation menus, and session lists.
+  function isInsideSidebar(element) {
+    if (!element || typeof element.closest !== "function") return false;
+    return Boolean(
+      element.closest(
+        "aside, nav, [role='navigation'], [class*='sidebar'], [class*='side-bar'], [class*='history-list'], [class*='historyList'], [class*='session-list'], [class*='conversation-list'], [class*='chat-history'], [id*='sidebar'], [id*='drawer']"
+      )
+    );
+  }
+
   // Scrapers for each platform
   const scrapers = {
     ChatGPT: function () {
@@ -152,6 +163,7 @@
 
       if (turns.length > 0) {
         turns.forEach((turn) => {
+          if (isInsideSidebar(turn)) return;
           let role = turn.getAttribute("data-message-author-role");
           if (!role) {
             const innerRoleEl = turn.querySelector("[data-message-author-role]");
@@ -190,6 +202,7 @@
       // ChatGPT Fallback: Query all role nodes directly
       const directRoleNodes = document.querySelectorAll("[data-message-author-role]");
       directRoleNodes.forEach((node) => {
+        if (isInsideSidebar(node)) return;
         const role = node.getAttribute("data-message-author-role") || "assistant";
         const attachments = extractAttachments(node);
         const clone = node.cloneNode(true);
@@ -209,6 +222,7 @@
       const turns = document.querySelectorAll("user-query, model-response, .user-query-container, .response-container, [data-test-id='user-query'], [data-test-id='model-response-text']");
       if (turns.length > 0) {
         turns.forEach((turn) => {
+          if (isInsideSidebar(turn)) return;
           const isUser = turn.matches("user-query, .user-query-container, [data-test-id='user-query']") ||
             turn.querySelector(".user-query, [data-test-id='user-query']");
           const role = isUser ? "user" : "assistant";
@@ -227,6 +241,7 @@
 
       // Fallback: look for query content & markdown blocks
       document.querySelectorAll(".query-content, .response-content, .markdown").forEach((node) => {
+        if (isInsideSidebar(node)) return;
         const isUser = node.classList.contains("query-content") || node.closest(".user-query-container");
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(node);
@@ -245,6 +260,7 @@
       const messageContainers = document.querySelectorAll("[data-testid='user-message'], .font-user-message, [data-is-streaming]");
       if (messageContainers.length > 0) {
         messageContainers.forEach((el) => {
+          if (isInsideSidebar(el)) return;
           const isUser = el.matches("[data-testid='user-message'], .font-user-message") || el.closest("[data-testid='user-message']");
           const role = isUser ? "user" : "assistant";
           const attachments = extractAttachments(el);
@@ -256,6 +272,7 @@
 
       // Alternative selector
       document.querySelectorAll(".group.relative").forEach((el) => {
+        if (isInsideSidebar(el)) return;
         const isUser = el.querySelector("[data-testid='user-message']") !== null;
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(el);
@@ -271,6 +288,7 @@
       // DeepSeek message items
       const items = document.querySelectorAll(".chat-message, [class*='message'], [class*='chatItem']");
       items.forEach((item) => {
+        if (isInsideSidebar(item)) return;
         const isUser = item.classList.value.includes("user") || item.querySelector("[class*='user']");
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(item);
@@ -283,6 +301,7 @@
     Kimi: function () {
       const msgs = [];
       document.querySelectorAll("[class*='chatMessage'], [class*='messageItem']").forEach((el) => {
+        if (isInsideSidebar(el)) return;
         const isUser = el.classList.value.includes("user") || el.querySelector("[class*='user']");
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(el);
@@ -295,6 +314,7 @@
     Grok: function () {
       const msgs = [];
       document.querySelectorAll("[data-testid*='message'], [class*='message-bubble']").forEach((el) => {
+        if (isInsideSidebar(el)) return;
         const isUser = el.classList.value.includes("user");
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(el);
@@ -308,6 +328,7 @@
     "Z-AI": function () {
       const msgs = [];
       const candidateSelectors = [
+        "[data-message-id]",
         ".chat-item",
         ".message-item",
         ".conversation-item",
@@ -315,6 +336,10 @@
         "[class*='messageItem']",
         "[class*='chat_item']",
         "[class*='message_item']",
+        "[class*='chat-message']",
+        "[class*='chatMessage']",
+        "[class*='message-container']",
+        "[class*='dialogue-item']",
         ".msg-item",
         ".bubble-container",
         "[data-role]",
@@ -324,6 +349,7 @@
       const turns = document.querySelectorAll(candidateSelectors.join(","));
       if (turns.length > 0) {
         turns.forEach((turn) => {
+          if (isInsideSidebar(turn)) return;
           const roleAttr = turn.getAttribute("data-role") || turn.getAttribute("data-message-author-role");
           const classStr = (turn.className || "").toString().toLowerCase();
           const isUser = roleAttr === "user" ||
@@ -348,6 +374,7 @@
       // Secondary Z-AI pattern: Markdown / bubble elements
       const bubbles = document.querySelectorAll(".markdown, .bubble, [class*='bubble'], [class*='content']");
       bubbles.forEach((b) => {
+        if (isInsideSidebar(b)) return;
         const classStr = (b.className || "").toString().toLowerCase();
         const parentClass = (b.parentElement ? b.parentElement.className : "").toString().toLowerCase();
         if (classStr.includes("button") || classStr.includes("input") || classStr.includes("header")) return;
@@ -586,215 +613,115 @@
     return [...listA, ...listB];
   }
 
-  function findChatScrollContainer() {
-    if (typeof document === "undefined") return null;
-    const knownSelectors = [
-      // ChatGPT
-      "main div.overflow-y-auto",
-      "div[class*='react-scroll-to-bottom']",
-      "div[data-testid='conversation-turn-list']",
-      // Gemini
-      "infinite-scroller",
-      ".chat-history",
-      "div[class*='conversation-container']",
-      "div[class*='chat-window']",
-      // Claude
-      "div.overflow-y-auto",
-      // DeepSeek
-      "div[class*='chat-scroll']",
-      "div[class*='chat-messages']",
-      // Generic
-      "main"
-    ];
+  // Live Panoramic Conversation Accumulator
+  // Holds all conversation turns ever seen or scrolled past in this session.
+  // When an AI platform's virtualized list unmounts top or bottom messages,
+  // PromptPort preserves every turn so clicking Capture saves the complete thread.
+  let sessionAccumulator = [];
+  let lastScrapedUrl = location.href.split("?")[0];
 
-    for (const sel of knownSelectors) {
-      const el = document.querySelector(sel);
-      if (el && el.scrollHeight > el.clientHeight + 50) {
-        return el;
-      }
+  function accumulateVisibleMessages() {
+    const currentUrlBase = location.href.split("?")[0];
+    if (currentUrlBase !== lastScrapedUrl) {
+      sessionAccumulator = [];
+      lastScrapedUrl = currentUrlBase;
     }
-
-    // Dynamic scan: find ancestor of a message turn with scrollbar
-    const sampleTurn = document.querySelector(
-      "user-query, model-response, [data-message-author-role], [data-testid='user-message'], [data-message-id], .conversation-item"
-    );
-    if (sampleTurn) {
-      let parent = sampleTurn.parentElement;
-      while (parent && parent !== document.body && parent !== document.documentElement) {
-        try {
-          const style = window.getComputedStyle(parent);
-          if ((style.overflowY === "auto" || style.overflowY === "scroll") && parent.scrollHeight > parent.clientHeight + 50) {
-            return parent;
-          }
-        } catch (e) {}
-        parent = parent.parentElement;
-      }
-    }
-
-    if (document.scrollingElement && document.scrollingElement.scrollHeight > document.scrollingElement.clientHeight + 50) {
-      return document.scrollingElement;
-    }
-
-    return (typeof window !== "undefined") ? window : null;
-  }
-
-  async function fullChatCaptureSweep() {
-    const container = findChatScrollContainer();
-    if (!container) return extractAllMessages() || [];
-    const isWindow = (typeof window !== "undefined" && container === window);
-
-    const initialScrollTop = isWindow
-      ? (window.scrollY || (document.documentElement ? document.documentElement.scrollTop : 0) || 0)
-      : (container.scrollTop || 0);
-    const scrollHeight = isWindow
-      ? (document.documentElement ? document.documentElement.scrollHeight : 0)
-      : (container.scrollHeight || 0);
-    const clientHeight = isWindow
-      ? (window.innerHeight || 0)
-      : (container.clientHeight || 0);
-
-    let accumulatedMessages = extractAllMessages() || [];
-
-    // If container is not scrollable (short conversation), no scroll sweep needed!
-    if (scrollHeight <= clientHeight + 80) {
-      return accumulatedMessages;
-    }
-
-    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    const scrollTo = (top) => {
-      try {
-        if (isWindow) {
-          window.scrollTo({ top, behavior: "instant" });
-        } else {
-          container.scrollTop = top;
-        }
-      } catch (e) {}
-    };
 
     try {
-      // Step 1: Scroll to top to trigger loading and mounting of early messages
-      scrollTo(0);
-      await wait(180);
-      let topMsgs = extractAllMessages() || [];
-      accumulatedMessages = mergeMessageLists(accumulatedMessages, topMsgs);
-
-      // If new messages loaded at top causing scrollHeight to expand, scroll to top again
-      let currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
-      if (currentScrollHeight > scrollHeight + 100) {
-        scrollTo(0);
-        await wait(180);
-        topMsgs = extractAllMessages() || [];
-        accumulatedMessages = mergeMessageLists(accumulatedMessages, topMsgs);
+      const visibleMsgs = extractAllMessages() || [];
+      if (visibleMsgs.length > 0) {
+        sessionAccumulator = mergeMessageLists(sessionAccumulator, visibleMsgs);
       }
-
-      // Step 2: Step down through the chat container in smooth leaps so all virtual DOM blocks mount
-      const stepSize = Math.max(350, Math.floor(clientHeight * 0.75));
-      currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
-      let curPos = 0;
-
-      while (curPos < currentScrollHeight) {
-        curPos += stepSize;
-        scrollTo(curPos);
-        await wait(60);
-        const stepMsgs = extractAllMessages() || [];
-        accumulatedMessages = mergeMessageLists(accumulatedMessages, stepMsgs);
-        currentScrollHeight = isWindow ? document.documentElement.scrollHeight : container.scrollHeight;
-      }
-
-      // Step 3: Scroll to very bottom to ensure latest message is mounted
-      scrollTo(currentScrollHeight);
-      await wait(100);
-      const bottomMsgs = extractAllMessages() || [];
-      accumulatedMessages = mergeMessageLists(accumulatedMessages, bottomMsgs);
-    } finally {
-      // Always restore user's original scroll position smoothly
-      scrollTo(initialScrollTop);
-    }
-
-    return accumulatedMessages;
+    } catch (e) {}
   }
 
-  async function syncMessages(options = {}) {
-    let messages = [];
+  // Passively listen for scroll events anywhere on the page using event capture phase.
+  // The capture phase intercepts scroll events on ANY inner scrollable container (chat window, body, etc.)
+  // WITHOUT modifying the page's scroll position or hijacking the user's view.
+  let scrollThrottleTimer = null;
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (scrollThrottleTimer) return;
+      scrollThrottleTimer = setTimeout(() => {
+        scrollThrottleTimer = null;
+        accumulateVisibleMessages();
+      }, 180);
+    },
+    { capture: true, passive: true }
+  );
+
+  // Initial passive accumulation when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", accumulateVisibleMessages);
+  } else {
+    setTimeout(accumulateVisibleMessages, 500);
+  }
+
+  async function syncMessages() {
+    // 1. Immediately accumulate any messages currently in DOM
+    accumulateVisibleMessages();
+
+    const chatTitle = document.title || `${currentSite} Chat`;
+    const sessionId = `${currentSite}__${encodeURIComponent(location.href.split("?")[0])}`;
+
+    // 2. Fetch previously stored messages for this session
+    let storedMessages = [];
+    let chatSessions = {};
     try {
-      // Always perform a full chat capture sweep unless explicitly requested as quickOnly
-      if (options.quickOnly) {
-        messages = extractAllMessages() || [];
-      } else {
-        messages = await fullChatCaptureSweep();
+      const stored = await chrome.storage.local.get("chatSessions");
+      chatSessions = stored?.chatSessions || {};
+      if (chatSessions[sessionId]?.messages) {
+        storedMessages = chatSessions[sessionId].messages;
       }
-    } catch (err) {
-      console.warn("[PromptPort] fullChatCaptureSweep error, falling back:", err);
-      messages = extractAllMessages() || [];
+    } catch (e) {
+      chatSessions = {};
     }
 
-    if (!Array.isArray(messages) || messages.length === 0) {
+    // 3. Merge: Stored + In-Memory Accumulator + Currently Visible DOM
+    const visibleNow = extractAllMessages() || [];
+    let finalMessages = mergeMessageLists(storedMessages, sessionAccumulator);
+    finalMessages = mergeMessageLists(finalMessages, visibleNow);
+
+    sessionAccumulator = finalMessages;
+
+    if (!Array.isArray(finalMessages) || finalMessages.length === 0) {
       return { count: 0, site: currentSite };
     }
 
-    const chatTitle = document.title || `${currentSite} Chat`;
+    lastMessageCount = finalMessages.length;
+    console.log(`[PromptPort] Captured ${finalMessages.length} total messages from ${currentSite}`);
 
-    // Save directly into chrome.storage.local with smart merge
+    const existing = chatSessions[sessionId] || {
+      id: sessionId,
+      created: Date.now(),
+      isFavorite: false,
+      customTitle: null,
+      messages: []
+    };
+
+    const updatedSession = {
+      ...existing,
+      site: currentSite,
+      url: location.href,
+      title: existing.customTitle || chatTitle,
+      messages: finalMessages,
+      messageCount: finalMessages.length,
+      updated: Date.now()
+    };
+    chatSessions[sessionId] = updatedSession;
+    await chrome.storage.local.set({ chatSessions });
+
+    // Notify any listening components
     try {
-      let chatSessions = {};
-      try {
-        const stored = await chrome.storage.local.get("chatSessions");
-        chatSessions = stored?.chatSessions || {};
-      } catch (e) {
-        chatSessions = {};
-      }
+      chrome.runtime.sendMessage({
+        type: "SESSION_UPDATED",
+        sessionId,
+        session: updatedSession
+      }).catch(() => {});
+    } catch (e) {}
 
-      const sessionId = `${currentSite}__${encodeURIComponent(location.href.split("?")[0])}`;
-      const existing = chatSessions[sessionId] || {
-        id: sessionId,
-        created: Date.now(),
-        isFavorite: false,
-        customTitle: null,
-        messages: []
-      };
-
-      const mergedMessages = mergeMessageLists(existing.messages || [], messages);
-      lastMessageCount = mergedMessages.length;
-      console.log(`[PromptPort] Captured full chat: ${mergedMessages.length} total messages from ${currentSite}`);
-
-      const updatedSession = {
-        ...existing,
-        site: currentSite,
-        url: location.href,
-        title: existing.customTitle || chatTitle,
-        messages: mergedMessages,
-        messageCount: mergedMessages.length,
-        updated: Date.now()
-      };
-      chatSessions[sessionId] = updatedSession;
-      await chrome.storage.local.set({ chatSessions });
-
-      // Notify any listening components
-      try {
-        chrome.runtime.sendMessage({
-          type: "SESSION_UPDATED",
-          sessionId,
-          session: updatedSession
-        }).catch(() => {});
-      } catch (e) {}
-
-      return { count: mergedMessages.length, site: currentSite, title: chatTitle };
-    } catch (storageErr) {
-      console.warn("[PromptPort] Direct storage save error, sending to background:", storageErr);
-      try {
-        chrome.runtime.sendMessage({
-          type: "CHAT_CAPTURED",
-          payload: {
-            site: currentSite,
-            url: location.href,
-            title: chatTitle,
-            messages: messages
-          }
-        }).catch(() => {});
-      } catch (e) {}
-
-      return { count: messages.length, site: currentSite, title: chatTitle };
-    }
+    return { count: finalMessages.length, site: currentSite, title: chatTitle };
   }
 
   // Listen for paste, capture request, and side panel state from side panel / background
@@ -1136,7 +1063,7 @@
             <path d="M6 3.3333L8 1.3333L10 3.33331M8 1.3333L8 9.33331" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M3.99996 5.99997H2.66663V11.3333C2.66663 12.4379 3.56206 13.3333 4.66663 13.3333H11.3333C12.4379 13.3333 13.3333 12.4379 13.3333 11.3333V5.99997H12" stroke="#DCEB7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span id="ai-bridge-capture-text">Capture Full Chat</span>
+          <span id="ai-bridge-capture-text">Capture Conversation</span>
         </div>
         <div id="ai-bridge-action-panel" class="ai-bridge-action-item">
           <svg width="15" height="15" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1176,11 +1103,11 @@
       if (!isExtensionValid()) {
         if (captureText) captureText.textContent = "🔄 Please refresh tab";
         setTimeout(() => {
-          if (captureText) captureText.textContent = "Capture Full Chat";
+          if (captureText) captureText.textContent = "Capture Conversation";
         }, 2500);
         return;
       }
-      if (captureText) captureText.textContent = "Capturing full chat...";
+      if (captureText) captureText.textContent = "Capturing...";
       
       try {
         const res = await syncMessages();
@@ -1200,14 +1127,14 @@
         } else {
           if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
           setTimeout(() => {
-            if (captureText) captureText.textContent = "Capture Full Chat";
+            if (captureText) captureText.textContent = "Capture Conversation";
           }, 2000);
         }
       } catch (err) {
-        console.error("[PromptPort] Capture Full Chat error:", err);
+        console.error("[PromptPort] Capture Conversation error:", err);
         if (captureText) captureText.textContent = "⚠️ Found 0 msgs";
         setTimeout(() => {
-          if (captureText) captureText.textContent = "Capture Full Chat";
+          if (captureText) captureText.textContent = "Capture Conversation";
         }, 2000);
       }
     });

@@ -547,7 +547,7 @@ async function forceCaptureActiveTab() {
     return;
   }
 
-  showToast("Capturing full conversation…");
+  showToast("Capturing conversation…");
 
   try {
     let response;
