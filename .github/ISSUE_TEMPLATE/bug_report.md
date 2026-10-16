@@ -22,7 +22,7 @@ A clear and concise description of what the bug is.
 ### Browser Information
 - **Browser**: [e.g. Chrome, Edge, Brave, Arc]
 - **Browser Version**: [e.g. 128.0.0.0]
-- **Extension Version**: [e.g. 1.1.0]
+- **Extension Version**: [e.g. 1.2.0]
 - **Operating System**: [e.g. Windows 11, macOS Sequoia, Ubuntu 24.04]
 
 ### Steps to Reproduce

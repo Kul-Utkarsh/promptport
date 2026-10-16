@@ -91,6 +91,22 @@ function getMessageKey(msg) {
   return `${role}:::${text}:::${attach}`;
 }
 
+function isContiguousSubarray(mainArr, subArr) {
+  if (!subArr || subArr.length === 0) return true;
+  if (!mainArr || subArr.length > mainArr.length) return false;
+  for (let i = 0; i <= mainArr.length - subArr.length; i++) {
+    let match = true;
+    for (let j = 0; j < subArr.length; j++) {
+      if (mainArr[i + j] !== subArr[j]) {
+        match = false;
+        break;
+      }
+    }
+    if (match) return true;
+  }
+  return false;
+}
+
 function mergeMessageLists(listA, listB) {
   if (!listA || listA.length === 0) return listB ? [...listB] : [];
   if (!listB || listB.length === 0) return listA ? [...listA] : [];
@@ -102,10 +118,8 @@ function mergeMessageLists(listA, listB) {
     return listA;
   }
 
-  const strA = keysA.join("|||");
-  const strB = keysB.join("|||");
-  if (strA.includes(strB)) return listA;
-  if (strB.includes(strA)) return listB;
+  if (isContiguousSubarray(keysA, keysB)) return listA;
+  if (isContiguousSubarray(keysB, keysA)) return listB;
 
   const maxEndOverlap = Math.min(keysA.length, keysB.length);
   for (let k = maxEndOverlap; k >= 1; k--) {

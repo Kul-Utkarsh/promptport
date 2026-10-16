@@ -144,11 +144,21 @@
   // strictly excluding sidebar chat history drawers, navigation menus, and session lists.
   function isInsideSidebar(element) {
     if (!element || typeof element.closest !== "function") return false;
-    return Boolean(
-      element.closest(
-        "aside, nav, [role='navigation'], [class*='sidebar'], [class*='side-bar'], [class*='history-list'], [class*='historyList'], [class*='session-list'], [class*='conversation-list'], [class*='chat-history'], [id*='sidebar'], [id*='drawer']"
-      )
+    // An element inside <main> or the primary chat area is NOT sidebar
+    // Unless explicitly inside an aside/nav/drawer overlay
+    const sidebarContainer = element.closest(
+      "aside, nav, [role='navigation'], [id*='sidebar' i], [class*='sidebar' i], [class*='side-bar' i], [class*='history-list' i], [class*='historyList' i], [class*='session-list' i]"
     );
+    if (!sidebarContainer) return false;
+    // If it's inside a sidebar container, verify it's not actually the main chat view or messages container
+    if (
+      sidebarContainer.tagName === "MAIN" ||
+      sidebarContainer.getAttribute("role") === "main" ||
+      element.closest("main, #messages-container, #chat-container, [role='main']")
+    ) {
+      return false;
+    }
+    return true;
   }
 
   // Scrapers for each platform
@@ -328,7 +338,11 @@
     "Z-AI": function () {
       const msgs = [];
       const candidateSelectors = [
+        "#messages-container > div > div",
+        "#messages-container [class*='message-row']",
+        "#messages-container div[id^='message-']",
         "[data-message-id]",
+        ".message-row",
         ".chat-item",
         ".message-item",
         ".conversation-item",
@@ -357,13 +371,18 @@
             classStr.includes("question") ||
             turn.querySelector("[class*='user']") !== null ||
             turn.querySelector(".bubble-user") !== null ||
+            turn.querySelector("div[dir='auto']") !== null ||
             turn.innerText.trim().startsWith("You:");
 
           const role = isUser ? "user" : "assistant";
           const attachments = extractAttachments(turn);
-          const clone = turn.cloneNode(true);
+          const textEl = turn.querySelector(".markdown-prose, .prose, .markdown, [class*='content']") || turn;
+          const clone = textEl.cloneNode(true);
           clone.querySelectorAll("button, svg, .sr-only, .tools, .actions, [class*='action']").forEach(b => b.remove());
-          const text = clone.innerText.trim();
+          let text = clone.innerText.trim();
+          if (text.startsWith("You:")) {
+            text = text.replace(/^You:\s*/i, "").trim();
+          }
           if ((text && text.length > 0) || attachments.length > 0) {
             msgs.push({ role, text: text || "[Attached media]", attachments, ts: Date.now() });
           }
@@ -371,8 +390,8 @@
         if (msgs.length > 0) return msgs;
       }
 
-      // Secondary Z-AI pattern: Markdown / bubble elements
-      const bubbles = document.querySelectorAll(".markdown, .bubble, [class*='bubble'], [class*='content']");
+      // Secondary Z-AI pattern: Markdown-prose / Prose / Bubbles
+      const bubbles = document.querySelectorAll(".markdown-prose, .prose, .markdown, .bubble, [class*='bubble'], [class*='content']");
       bubbles.forEach((b) => {
         if (isInsideSidebar(b)) return;
         const classStr = (b.className || "").toString().toLowerCase();
@@ -383,7 +402,7 @@
         const role = isUser ? "user" : "assistant";
         const attachments = extractAttachments(b);
         const clone = b.cloneNode(true);
-        clone.querySelectorAll("button, svg, .sr-only").forEach(el => el.remove());
+        clone.querySelectorAll("button, svg, .sr-only, .tools, .actions").forEach(el => el.remove());
         const text = clone.innerText.trim();
         if ((text && text.length > 1) || attachments.length > 0) {
           msgs.push({ role, text: text || "[Attached media]", attachments, ts: Date.now() });
@@ -538,6 +557,22 @@
     return `${role}:::${text}:::${attach}`;
   }
 
+  function isContiguousSubarray(mainArr, subArr) {
+    if (!subArr || subArr.length === 0) return true;
+    if (!mainArr || subArr.length > mainArr.length) return false;
+    for (let i = 0; i <= mainArr.length - subArr.length; i++) {
+      let match = true;
+      for (let j = 0; j < subArr.length; j++) {
+        if (mainArr[i + j] !== subArr[j]) {
+          match = false;
+          break;
+        }
+      }
+      if (match) return true;
+    }
+    return false;
+  }
+
   function mergeMessageLists(listA, listB) {
     if (!listA || listA.length === 0) return listB ? [...listB] : [];
     if (!listB || listB.length === 0) return listA ? [...listA] : [];
@@ -550,11 +585,9 @@
       return listA;
     }
 
-    // Check if B is subsegment of A
-    const strA = keysA.join("|||");
-    const strB = keysB.join("|||");
-    if (strA.includes(strB)) return listA;
-    if (strB.includes(strA)) return listB;
+    // Check if B is contiguous subsegment of A
+    if (isContiguousSubarray(keysA, keysB)) return listA;
+    if (isContiguousSubarray(keysB, keysA)) return listB;
 
     // Case 1: B extends A at the end (new messages added at bottom)
     const maxEndOverlap = Math.min(keysA.length, keysB.length);
@@ -658,14 +691,286 @@
     setTimeout(accumulateVisibleMessages, 500);
   }
 
-  async function syncMessages() {
+  // Intelligent Conversation Title Extractor
+  // Extracts accurate chat session names, strictly rejecting static site branding & marketing titles,
+  // and deriving from the first user prompt turn when titles are generic.
+  function extractChatTitle(site, messages) {
+    const isGenericMarketingTitle = (title) => {
+      if (!title || typeof title !== "string") return true;
+      const t = title.trim();
+      if (t.length <= 1) return true;
+      const lower = t.toLowerCase();
+      // Check for generic marketing/branding strings
+      if (lower.includes("advanced ai chatbot") || lower.includes("agent powered by") || lower.includes("glm-")) return true;
+      if (lower === "chatgpt" || lower === "new chat" || lower === "chat") return true;
+      if (lower === "claude" || lower === "claude.ai") return true;
+      if (lower === "gemini" || lower === "google gemini") return true;
+      if (lower === "deepseek" || lower.includes("into the unknown")) return true;
+      if (lower === "kimi" || lower === "kimi.ai") return true;
+      if (lower === "grok" || lower === "x.ai") return true;
+      if (lower === "z.ai" || lower.startsWith("z.ai -") || lower.startsWith("z.ai :")) return true;
+      return false;
+    };
+
+    const cleanCandidateTitle = (candidate) => {
+      if (!candidate || typeof candidate !== "string") return "";
+      return candidate
+        .replace(/^ChatGPT\s*[-–—:]\s*/i, "")
+        .replace(/^Claude\s*[-–—:]\s*/i, "")
+        .replace(/^Gemini\s*[-–—:]\s*/i, "")
+        .replace(/^DeepSeek\s*[-–—:]\s*/i, "")
+        .replace(/^Z\.ai\s*[-–—:]\s*/i, "")
+        .replace(/^["'#\s]+|["'\s]+$/g, "")
+        .trim();
+    };
+
+    // 1. Try to find a real, specific title element from the DOM
+    const titleSelectors = [
+      "header input[type='text']",
+      "header h1",
+      "header h2",
+      "header [class*='title']",
+      "header div.truncate",
+      "[data-testid*='title']",
+      "[data-testid='chat-title']",
+      "[class*='conversation-title']",
+      "[class*='chat-title']",
+      "nav a[class*='selected'] div.truncate",
+      "nav a[class*='active'] div.truncate",
+      "aside a[class*='selected'] span",
+      "aside a[class*='active'] span"
+    ];
+
+    if (typeof document !== "undefined") {
+      for (const sel of titleSelectors) {
+        try {
+          const el = document.querySelector(sel);
+          if (el) {
+            const val = el.value || el.innerText || el.textContent || "";
+            const cleaned = cleanCandidateTitle(val);
+            if (cleaned && !isGenericMarketingTitle(cleaned) && cleaned.length > 2) {
+              return cleaned.length > 60 ? cleaned.slice(0, 60).trim() + "..." : cleaned;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 2. Try document.title if it's not generic marketing boilerplate
+      if (document.title) {
+        const docClean = cleanCandidateTitle(document.title);
+        if (docClean && !isGenericMarketingTitle(docClean) && docClean.length > 2) {
+          return docClean.length > 60 ? docClean.slice(0, 60).trim() + "..." : docClean;
+        }
+      }
+    }
+
+    // 3. Fallback: Derive a meaningful session title from the first user turn!
+    if (Array.isArray(messages) && messages.length > 0) {
+      const firstUserMsg = messages.find(m => m && m.role === "user" && m.text && m.text.trim());
+      if (firstUserMsg && firstUserMsg.text) {
+        let firstLine = firstUserMsg.text
+          .trim()
+          .split(/[\r\n]+/)[0]
+          .replace(/^[#>\s\-*`"']+|["'`]+$/g, "")
+          .trim();
+        if (firstLine.length > 55) {
+          firstLine = firstLine.slice(0, 55).trim() + "...";
+        }
+        if (firstLine.length >= 3) {
+          return firstLine;
+        }
+      }
+    }
+
+    return `${site || "AI"} Chat`;
+  }
+
+  // Reliably locate the active chat scroll container (and NEVER the sidebar history drawer)
+  function getActiveChatScrollContainer() {
+    if (typeof document === "undefined") return null;
+
+    // 1. Z-AI explicitly uses #messages-container
+    const zaiContainer = document.getElementById("messages-container");
+    if (zaiContainer && zaiContainer.scrollHeight > zaiContainer.clientHeight + 40) {
+      return zaiContainer;
+    }
+
+    // 2. Walk upwards from an actual message node in the main chat
+    const sampleMsg = document.querySelector(
+      "[data-message-author-role], .model-response-text, [data-testid='user-message'], .markdown-prose, .prose, .chat-item, [class*='messageItem']"
+    );
+    if (sampleMsg) {
+      let curr = sampleMsg.parentElement;
+      while (curr && curr !== document.body && curr !== document.documentElement) {
+        if (!isInsideSidebar(curr)) {
+          const overflowY = (typeof window !== "undefined" && window.getComputedStyle)
+            ? window.getComputedStyle(curr).overflowY
+            : (curr.style ? curr.style.overflowY : "");
+          if (
+            (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") &&
+            curr.scrollHeight > curr.clientHeight + 40
+          ) {
+            return curr;
+          }
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // 3. Walk upwards from the chat input element
+    const chatInput = document.querySelector("textarea, [contenteditable='true']");
+    if (chatInput) {
+      let curr = chatInput.parentElement;
+      while (curr && curr !== document.body && curr !== document.documentElement) {
+        if (!isInsideSidebar(curr)) {
+          const overflowY = (typeof window !== "undefined" && window.getComputedStyle)
+            ? window.getComputedStyle(curr).overflowY
+            : (curr.style ? curr.style.overflowY : "");
+          if (
+            (overflowY === "auto" || overflowY === "scroll" || overflowY === "overlay") &&
+            curr.scrollHeight > curr.clientHeight + 40
+          ) {
+            return curr;
+          }
+        }
+        curr = curr.parentElement;
+      }
+    }
+
+    // 4. Window / documentElement fallback
+    if (typeof window !== "undefined" && document.documentElement && document.documentElement.scrollHeight > window.innerHeight + 50) {
+      return window;
+    }
+
+    return null;
+  }
+
+  // Full Conversation History Sweep
+  // Accurately sweeps the active chat scroll container (and NEVER touches the sidebar)
+  // to trigger loading of earlier turns (pagination) and ensure every virtualized turn is mounted.
+  async function sweepFullChatHistory() {
+    const container = getActiveChatScrollContainer();
+    accumulateVisibleMessages();
+
+    if (!container) {
+      return sessionAccumulator;
+    }
+
+    const isWindow = (typeof window !== "undefined" && container === window);
+    const getScrollTop = () => isWindow
+      ? (window.scrollY || (document.documentElement ? document.documentElement.scrollTop : 0))
+      : container.scrollTop;
+    const getScrollHeight = () => isWindow
+      ? (document.documentElement ? document.documentElement.scrollHeight : 0)
+      : container.scrollHeight;
+    const getClientHeight = () => isWindow
+      ? (window.innerHeight || 0)
+      : container.clientHeight;
+
+    const initialScrollTop = getScrollTop();
+    const initialHeight = getScrollHeight();
+    const clientHeight = getClientHeight();
+
+    // If container does not scroll (short conversation), no sweep is needed
+    if (initialHeight <= clientHeight + 80) {
+      accumulateVisibleMessages();
+      return sessionAccumulator;
+    }
+
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    const setScroll = (top) => {
+      try {
+        if (isWindow) {
+          window.scrollTo({ top, behavior: "instant" });
+          window.dispatchEvent(new Event("scroll"));
+        } else {
+          container.scrollTop = top;
+          container.dispatchEvent(new Event("scroll", { bubbles: true }));
+        }
+      } catch (e) {}
+    };
+
+    try {
+      // Step 1: Continuous Adaptive Pagination to top
+      // Loops until height stops growing, supporting conversations of any length (120+, 200+, 500+ messages)
+      let prevHeight = getScrollHeight();
+      const maxBatches = 80; // Safety guard to support up to 1,500+ messages without infinite loop
+
+      for (let batch = 0; batch < maxBatches; batch++) {
+        setScroll(0);
+        
+        // Poll for container height expansion (network fetch loading older messages)
+        let heightGrew = false;
+        const maxWaitMs = 900;
+        const pollMs = 60;
+        let elapsed = 0;
+
+        while (elapsed < maxWaitMs) {
+          await wait(pollMs);
+          elapsed += pollMs;
+          const currHeight = getScrollHeight();
+          if (currHeight > prevHeight + 30) {
+            heightGrew = true;
+            // Allow extra frame for DOM nodes to settle
+            await wait(100);
+            prevHeight = getScrollHeight();
+            accumulateVisibleMessages();
+            if (typeof onProgress === "function") {
+              try { onProgress(sessionAccumulator.length); } catch (e) {}
+            }
+            break;
+          }
+        }
+
+        // If after maxWaitMs no new messages arrived, we have reached the true beginning of the conversation!
+        if (!heightGrew) {
+          accumulateVisibleMessages();
+          break;
+        }
+      }
+
+      // Step 2: Step down in increments (65% of viewport) so all virtual DOM turns mount
+      const step = Math.max(250, Math.floor(clientHeight * 0.65));
+      let currentTop = 0;
+      let maxScroll = getScrollHeight();
+
+      while (currentTop < maxScroll) {
+        currentTop += step;
+        setScroll(currentTop);
+        await wait(50);
+        accumulateVisibleMessages();
+        maxScroll = getScrollHeight();
+      }
+
+      // Step 3: Ensure bottom is reached
+      setScroll(maxScroll);
+      await wait(80);
+      accumulateVisibleMessages();
+    } finally {
+      // Restore user's original scroll position smoothly
+      setScroll(initialScrollTop);
+    }
+
+    return sessionAccumulator;
+  }
+
+  async function syncMessages(options = {}) {
     // 1. Immediately accumulate any messages currently in DOM
     accumulateVisibleMessages();
 
-    const chatTitle = document.title || `${currentSite} Chat`;
+    // 2. Perform a safe full chat history sweep across the active chat container
+    // unless quickOnly is explicitly requested
+    if (!options.quickOnly) {
+      try {
+        await sweepFullChatHistory(options.onProgress);
+      } catch (err) {
+        console.warn("[PromptPort] sweepFullChatHistory warning:", err);
+      }
+    }
+
     const sessionId = `${currentSite}__${encodeURIComponent(location.href.split("?")[0])}`;
 
-    // 2. Fetch previously stored messages for this session
+    // 3. Fetch previously stored messages for this session
     let storedMessages = [];
     let chatSessions = {};
     try {
@@ -678,7 +983,7 @@
       chatSessions = {};
     }
 
-    // 3. Merge: Stored + In-Memory Accumulator + Currently Visible DOM
+    // 4. Merge: Stored + In-Memory Accumulator + Currently Visible DOM
     const visibleNow = extractAllMessages() || [];
     let finalMessages = mergeMessageLists(storedMessages, sessionAccumulator);
     finalMessages = mergeMessageLists(finalMessages, visibleNow);
@@ -689,8 +994,11 @@
       return { count: 0, site: currentSite };
     }
 
+    // 5. Derive smart, accurate conversation title
+    const chatTitle = extractChatTitle(currentSite, finalMessages);
+
     lastMessageCount = finalMessages.length;
-    console.log(`[PromptPort] Captured ${finalMessages.length} total messages from ${currentSite}`);
+    console.log(`[PromptPort] Captured ${finalMessages.length} total messages from ${currentSite} ("${chatTitle}")`);
 
     const existing = chatSessions[sessionId] || {
       id: sessionId,
@@ -1107,15 +1415,19 @@
         }, 2500);
         return;
       }
-      if (captureText) captureText.textContent = "Capturing...";
+      if (captureText) captureText.textContent = "Scanning full chat...";
       
       try {
-        const res = await syncMessages();
+        const res = await syncMessages({
+          onProgress: (scannedCount) => {
+            if (captureText) captureText.textContent = `Scanning (${scannedCount} msgs)...`;
+          }
+        });
         const count = res ? res.count : 0;
         capturedMessageCount = count;
 
         if (count > 0) {
-          if (captureText) captureText.textContent = `✅ Saved ${count} msgs!`;
+          if (captureText) captureText.textContent = `✅ Saved all ${count} msgs!`;
           captureItem.classList.add("success");
           updateButtonToRecaptureState(count);
 

@@ -1374,6 +1374,14 @@ async function initSettingsAndTheme() {
   const exportFormatSelect = document.getElementById("exportFormatSelect");
   if (exportFormatSelect) exportFormatSelect.value = defaultExportFormat;
 
+  const versionBadge = document.querySelector(".fig-version-badge span:last-child");
+  if (versionBadge && typeof chrome !== "undefined" && chrome.runtime?.getManifest) {
+    const manifest = chrome.runtime.getManifest();
+    if (manifest?.version) {
+      versionBadge.textContent = `v${manifest.version}`;
+    }
+  }
+
   const floatToggle = document.getElementById("settingShowFloatingBtn");
   if (floatToggle) floatToggle.checked = showFloatingBtn;
 

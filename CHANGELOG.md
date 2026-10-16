@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2026-10-16
+
+### Added
+- **Infinite Conversation Capture (Uncapped Multi-Batch Pagination)**: Expanded history sweep loop to dynamically paginate up to 80 batches (supporting 1,600+ turns), ensuring complete thread capture regardless of length (1 to 200+ messages).
+- **Adaptive DOM Expansion Polling**: Replaced static scroll timeouts with active scroll height expansion polling (80ms to 900ms per batch), resolving network latency race conditions during historical turn loading.
+- **Dual Framework Scroll Event Dispatching**: Synthesizes and dispatches `scroll` events to both `window` and the active chat scroll container (`bubbles: true`), reliably activating infinite-scroll listeners on modern Svelte, React, and Vue applications.
+- **Stepped Virtual DOM Sweep**: Progresses downward through the conversation in 65% viewport steps with 50ms render windows, guaranteeing that virtualized middle conversation turns are captured and retained without being dropped.
+- **Real-Time Capture Progress Display**: Floating capture tray button now displays live multi-stage scanning feedback (`Scanning (40 msgs)...` -> `Scanning (80 msgs)...` -> `Saved all X msgs!`).
+- **Seam 8 Regression Test Suite**: Added automated tests verifying end-to-end multi-batch pagination and virtual DOM accumulation for large 120+ message conversations.
+
+### Fixed
+- **Z-AI Isolated Container Targeting**: Restricted scroll container selection on Z-AI specifically to `#messages-container`, completely eliminating inadvertent sidebar drawer scrolling and preserving current chat focus.
+- **Accurate Chat Session Titles**: Updated title extraction logic for Z-AI and similar platforms to accurately parse conversation headings instead of falling back to default site meta-tags.
+- **Contiguous Subarray Sequence Alignment**: Upgraded sequence deduplication (`isContiguousSubarray`) to eliminate substring collisions when merging non-overlapping conversation chunks.
+
+---
+
 ## [1.1.0] - 2026-10-13
 
 ### Added
